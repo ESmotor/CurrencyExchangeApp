@@ -3,6 +3,7 @@ package com.itskidan.currencyexchangeapp.application
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.DisplayMetrics
 import com.itskidan.core.CoreProvidersFactory
 import com.itskidan.currencyexchangeapp.BuildConfig
 import com.itskidan.currencyexchangeapp.di.AppComponent
@@ -17,7 +18,8 @@ class App : Application() {
     val lifecycleObserver = LifecycleObserver()
     var version = "none"
     lateinit var dagger: AppComponent
-
+    var screenWidthInDp = 0
+    var screenHeightInDp = 0
 
     override fun onCreate() {
         super.onCreate()

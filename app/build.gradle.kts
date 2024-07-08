@@ -85,8 +85,9 @@ dependencies {
     // Dagger
     implementation (libs.dagger.android)
     kapt(libs.dagger.android.compiler)
-//    implementation (libs.dagger.android.support)
-//    annotationProcessor (libs.dagger.android.processor)
+    // Reorderable lists
+    implementation(libs.reorderable)
+
 
     //Modules
     implementation(project(":remote_module"))

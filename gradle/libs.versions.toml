@@ -12,6 +12,8 @@ materialIconsExtended = "1.6.8"
 navigationCompose = "2.7.7"
 uiTextGoogleFonts = "1.6.8"
 devtoolsKsp = "2.0.0-1.0.22"
+#Reoederable
+reorderable = "2.1.1"
 #Dagger
 daggerAndroid = "2.51.1"
 #Room
@@ -64,6 +66,8 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRunt
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+#Reorderable
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

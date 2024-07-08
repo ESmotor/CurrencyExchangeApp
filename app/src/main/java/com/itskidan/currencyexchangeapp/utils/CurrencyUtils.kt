@@ -4,19 +4,16 @@ import android.content.Context
 import com.itskidan.currencyexchangeapp.R
 
 object CurrencyUtils {
-    // currency flag resources
-//    val currencyFlagMap = mapOf(
-//        "USD" to R.drawable.flag_usd,
-//        "RUB" to R.drawable.flag_rub,
-//        "CHF" to R.drawable.flag_chf,
-//        "EUR" to R.drawable.flag_eur,
-//        "CNY" to R.drawable.flag_cny,
-//        "TRY" to R.drawable.flag_try,
-//        "KZT" to R.drawable.flag_kzt,
-//        "BRL" to R.drawable.flag_brl,
-//        "JPY" to R.drawable.flag_jpy,
-//        "GBP" to R.drawable.flag_gbp,
-//    )
+    // currency code for update daatabase
+    val currencyCodeList = listOf(
+        "USD",
+        "RUB",
+        "CHF",
+        "EUR",
+        "CNY",
+        "TRY",
+        "KZT",
+    )
     val currencyFlagMap = mapOf(
         "USD" to R.drawable.flag_vector_usd,
         "RUB" to R.drawable.flag_vector_rub,
@@ -34,7 +31,7 @@ object CurrencyUtils {
     )
 
     // currency name resources
-    fun createCurrencyNameMap (context: Context): Map<String, String> {
+    fun createCurrencyNameMap(context: Context): Map<String, String> {
         return mapOf(
             "USD" to context.getString(R.string.united_sate_dollar),
             "RUB" to context.getString(R.string.russian_ruble),
