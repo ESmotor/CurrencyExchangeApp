@@ -10,8 +10,7 @@ import javax.inject.Singleton
 
 @Singleton
 class MainRepository @Inject constructor(private val currencyDao: CurrencyDao) {
-    // put currency to BataBase
-    suspend fun putCurrencyToDB(currency: Currency) {
+    suspend fun putCurrencyToDatabase(currency: Currency) {
         try {
             withContext(Dispatchers.IO) {
                 currencyDao.insertCurrencyToDB(currency)
@@ -21,7 +20,39 @@ class MainRepository @Inject constructor(private val currencyDao: CurrencyDao) {
         }
     }
 
-    fun getCurrencyFromDB(): Flow<List<Currency>> {
+    suspend fun updateDatabase(currencyList: List<Currency>) {
+        try {
+            withContext(Dispatchers.IO) {
+                currencyDao.clearDatabase()
+                currencyDao.insertAll(currencyList)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun deleteCurrencyByCodeFromDatabase(currencyCode: String) {
+        try {
+            withContext(Dispatchers.IO) {
+                currencyDao.deleteCurrencyByCodeFromDB(currencyCode)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun clearDatabase() {
+        try {
+            withContext(Dispatchers.IO) {
+                currencyDao.clearDatabase()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun getAllDatabase(): Flow<List<Currency>> {
         return currencyDao.getCachedCurrencyFromDB()
     }
+
 }

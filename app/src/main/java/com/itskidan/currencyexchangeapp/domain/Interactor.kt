@@ -11,7 +11,7 @@ class Interactor @Inject constructor(
     private val repository: MainRepository,
 ) {
     // interaction with local database
-    suspend fun putCurrencyToDB(currency: Currency) = repository.putCurrencyToDB(currency)
-
-    fun getCurrencyFromDB(): Flow<List<Currency>> = repository.getCurrencyFromDB()
+    suspend fun putCurrencyToDatabase(currency: Currency) = repository.putCurrencyToDatabase(currency)
+    suspend fun updateDatabase(currencyList: List<Currency>) = repository.updateDatabase(currencyList)
+    fun getAllDatabase(): Flow<List<Currency>> = repository.getAllDatabase()
 }
