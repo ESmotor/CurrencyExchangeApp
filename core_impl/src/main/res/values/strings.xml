@@ -1,0 +1,16 @@
+<resources>
+    <string name="united_sate_dollar">United Sate Dollar</string>
+    <string name="russian_ruble">Russian Ruble</string>
+    <string name="swiss_franc">Swiss Franc</string>
+    <string name="european_euro">European Euro</string>
+    <string name="chinese_yuan">Chinese Yuan</string>
+    <string name="turkish_lira">Turkish Lira</string>
+    <string name="kazakhstan_tenge">Kazakhstan Tenge</string>
+    <string name="brazilian_real">Brazilian Real</string>
+    <string name="japanese_yen">Japanese Yen</string>
+    <string name="british_pound_sterling">British Pound Sterling</string>
+    <string name="united_arab_emirates_dirham">United Arab Emirates Dirham</string>
+    <string name="australian_dollar">Australian Dollar</string>
+    <string name="canadian_dollar">Canadian Dollar</string>
+    <string name="unknown_currency_name">Unknown Currency Name</string>
+</resources>

@@ -46,4 +46,24 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Coroutines
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
+    // LifeCycle
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    // Timber
+    implementation(libs.timber)
+    // Dagger
+    implementation (libs.dagger.android)
+    kapt(libs.dagger.android.compiler)
+    //Retrofit
+    implementation (libs.retrofit2)
+    implementation (libs.retrofit2.converter.gson)
+    //Okhttp
+    implementation (platform(libs.okhttp3.bom))
+    implementation (libs.okhttp3)
+    implementation (libs.okhttp3.logging.interceptor)
+
 }

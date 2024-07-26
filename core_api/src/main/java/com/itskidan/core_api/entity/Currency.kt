@@ -14,12 +14,9 @@ import kotlinx.parcelize.Parcelize
 data class Currency(
     var id: Int,
     @PrimaryKey(autoGenerate = false) val currencyCode: String,
-    val currencyName: String,
-    val currencyFlagId: Int,
-    var currencyAskValue: Double,
-    var currencyBidValue: Double
+    var currencyRate: Double,
 ) : Parcelable {
     override fun toString(): String {
-        return "id:$id, Code:$currencyCode, Name:$currencyName, Value:$currencyAskValue"
+        return "id:$id, Code:$currencyCode, Rate:$currencyRate"
     }
 }

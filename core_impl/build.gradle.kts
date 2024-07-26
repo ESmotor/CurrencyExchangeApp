@@ -48,6 +48,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     // Modules
     api(project(":core_api"))
+    implementation(project(":remote_module"))
     // Room
     implementation (libs.androidx.room.runtime)
     implementation (libs.androidx.room.ktx)
@@ -63,6 +64,11 @@ dependencies {
     // Dagger
     implementation (libs.dagger.android)
     kapt(libs.dagger.android.compiler)
-//    implementation (libs.dagger.android.support)
-//    annotationProcessor (libs.dagger.android.processor)
+    //Retrofit
+    implementation (libs.retrofit2)
+    implementation (libs.retrofit2.converter.gson)
+    //Okhttp
+    implementation (platform(libs.okhttp3.bom))
+    implementation (libs.okhttp3)
+    implementation (libs.okhttp3.logging.interceptor)
 }
