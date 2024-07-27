@@ -8,6 +8,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +19,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -72,6 +74,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -92,7 +95,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.currencyexchangeapp.R
-import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
@@ -112,8 +114,6 @@ fun HomeScreen(
     KeepScreenOn(context)
 
     //create ScreenSize
-    val screenWidthInDp = App.instance.screenWidthInDp
-
     var isRefreshing by remember { mutableStateOf(false) }
 
 
@@ -262,7 +262,6 @@ fun HomeScreen(
                 activeCurrencyList = activeCurrencyList,
                 lastSelectedIndex = lastSelectedIndex,
                 lastSelectedValue = lastSelectedValue,
-                screenWidthInDp = screenWidthInDp,
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     scope.launch {
@@ -286,7 +285,6 @@ fun PullToRefreshLazyColumn(
     activeCurrencyList: List<String>,
     lastSelectedIndex: Int,
     lastSelectedValue: String,
-    screenWidthInDp: Int,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState = rememberLazyListState()
@@ -318,7 +316,6 @@ fun PullToRefreshLazyColumn(
                     currencyCode = currencyCode,
                     lastSelectedValue = lastSelectedValue,
                     index = index,
-                    screenWidthInDp = screenWidthInDp,
                     viewModel = viewModel,
                     scope = scope,
                     isInitiallyFocused = isLastSelected
@@ -356,7 +353,6 @@ fun CurrencyListItemForHomeScreen(
     currencyCode: String,
     lastSelectedValue: String,
     index: Int,
-    screenWidthInDp: Int,
     viewModel: HomeScreenViewModel = viewModel(),
     scope: CoroutineScope,
     isInitiallyFocused: Boolean
@@ -369,13 +365,26 @@ fun CurrencyListItemForHomeScreen(
     val currentInput by viewModel.currentInput.collectAsState()
     val ratesFromDatabase by viewModel.ratesFromDatabase.collectAsState(emptyMap())
 
-    LaunchedEffect(ratesFromDatabase, currentInput, isFocusedTextField) {
-        if (ratesFromDatabase.isNotEmpty() || !isFocusedTextField.value) {
+    val itemHeight = 60.dp
+
+    LaunchedEffect( currentInput, isFocusedTextField) {
+        if ( !isFocusedTextField.value) {
             val text = viewModel.getCalculatedRate(currencyCode, currentInput)
             textState.value = TextFieldValue(
                 text = text,
                 selection = TextRange(text.length)
             )
+        }
+    }
+    LaunchedEffect(ratesFromDatabase) {
+        if (ratesFromDatabase.isNotEmpty()) {
+            if ( !isFocusedTextField.value) {
+                val text = viewModel.getCalculatedRate(currencyCode, currentInput)
+                textState.value = TextFieldValue(
+                    text = text,
+                    selection = TextRange(text.length)
+                )
+            }
         }
     }
 
@@ -395,7 +404,7 @@ fun CurrencyListItemForHomeScreen(
             scope.launch { }
         },
         modifier = Modifier
-            .height(80.dp),
+            .height(itemHeight),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -403,7 +412,7 @@ fun CurrencyListItemForHomeScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .height(itemHeight)
                 .background(if (isFocusedTextField.value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -412,28 +421,36 @@ fun CurrencyListItemForHomeScreen(
             // This is flag
             Box(
                 modifier = Modifier
-                    .height(80.dp)
-                    .width(80.dp),
+                    .padding(horizontal = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    imageVector = ImageVector.vectorResource(
-                        viewModel.getCurrencyFlag(currencyCode)
-                    ),
-                    contentDescription = "Currency Flag Country",
+                Box(
                     modifier = Modifier
-                        .width(50.dp)
-                        .height(50.dp),
-                    contentScale = ContentScale.Crop,
-                    alignment = Alignment.Center,
-                )
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .border(
+                            2.dp,
+                            MaterialTheme.colorScheme.primaryContainer,
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        imageVector = ImageVector.vectorResource(
+                            viewModel.getCurrencyFlag(currencyCode)
+                        ),
+                        contentDescription = "Currency Flag Country",
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
             // Name of currency
             Box(
                 modifier = Modifier
-                    .height(80.dp)
-                    .width(60.dp),
+                    .padding(start = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -447,13 +464,10 @@ fun CurrencyListItemForHomeScreen(
 
             // This is icon for change currency
             Box(
-                modifier = Modifier
-                    .height(80.dp)
-                    .width(30.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.size(30.dp),
                     imageVector = Icons.Default.ArrowDropDown,
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Triangle list icon",
@@ -463,9 +477,8 @@ fun CurrencyListItemForHomeScreen(
             // This is edit text for write amount
             Box(
                 modifier = Modifier
-                    .height(80.dp)
-                    .width((screenWidthInDp - 230).dp),
-
+                    .weight(1f)
+                    .padding(horizontal = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
                 TextField(
@@ -492,14 +505,12 @@ fun CurrencyListItemForHomeScreen(
                             shape = MaterialTheme.shapes.small
                         )
                         .fillMaxWidth()
-                        .height(60.dp)
-                        .heightIn(min = 56.dp)
+                        .height(56.dp)
                         .onFocusChanged { focusState ->
                             isFocusedTextField.value = focusState.isFocused
                             viewModel.updateCurrentInput(currencyCode, textState.value.text)
                         }
                         .focusRequester(focusRequester),
-
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
@@ -509,8 +520,7 @@ fun CurrencyListItemForHomeScreen(
             // This is icon for calculator
             Box(
                 modifier = Modifier
-                    .height(80.dp)
-                    .width(55.dp)
+                    .padding(horizontal = LocalPaddingValues.current.extraSmall)
                     .clickable(
                         onClick = {
                             scope.launch {
@@ -528,8 +538,8 @@ fun CurrencyListItemForHomeScreen(
                 Icon(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .height(55.dp)
-                        .width(55.dp),
+                        .height(35.dp)
+                        .width(35.dp),
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     imageVector = Icons.Default.Calculate,
                     contentDescription = stringResource(R.string.home_screen_calculate_icon_description),
