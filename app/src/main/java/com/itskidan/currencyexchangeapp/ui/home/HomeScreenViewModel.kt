@@ -66,7 +66,6 @@ class HomeScreenViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             updateDatabaseRates()
         }
-
     }
 
     fun getCurrencyFlag(currencyCode: String): Int {
@@ -215,8 +214,8 @@ class HomeScreenViewModel : ViewModel() {
     suspend fun updateDatabaseRates(codeList: List<String> = currencyCodeList) {
         if (isDatabaseUpdateTime()) {
             interactor.updateDatabase(codeList)
+            interactor.saveUpdateTimeCurrencyRates()
         }
-        interactor.saveUpdateTimeCurrencyRates()
         Timber.tag("MyLog").d("method: updateDatabaseRates()")
     }
 }

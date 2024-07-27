@@ -108,20 +108,22 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
-        try {
-            withContext(Dispatchers.IO) {
-                currencyDao.clearDatabase()
-                val updatedCurrencyRates: Map<String, Double?> =
-                    availableCurrencyCodeList.associateWith { (100..10000).random()/100.0 }
-                val currencyList =
-                    prepareCurrencyListForDB(availableCurrencyCodeList, updatedCurrencyRates)
-                currencyDao.insertAll(currencyList)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+//    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
+//        try {
+//            withContext(Dispatchers.IO) {
+//                currencyDao.clearDatabase()
+//                val updatedCurrencyRates: Map<String, Double?> =
+//                    availableCurrencyCodeList.associateWith { (100..10000).random()/100.0 }
+//                val currencyList =
+//                    prepareCurrencyListForDB(availableCurrencyCodeList, updatedCurrencyRates)
+//                currencyDao.insertAll(currencyList)
+//            }
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//        }
+//    }
+
+
 
     private fun prepareCurrencyListForDB(
         codeList: List<String>,
@@ -227,6 +229,6 @@ class MainRepository @Inject constructor(
     fun getDefaultCurrencyName(): String = resourceManager.getDefaultCurrencyName()
     fun getCurrencyFlagsMap(): Map<String, Int> = resourceManager.getCurrencyFlagsMap()
     fun getDefaultCurrencyFlag(): Int = resourceManager.getDefaultCurrencyFlag()
-    fun getCurrencyCodeList(): List<String> = resourceManager.getCurrencyCodes()
+    private fun getCurrencyCodeList(): List<String> = resourceManager.getCurrencyCodes()
 
 }
