@@ -87,7 +87,13 @@ dependencies {
     kapt(libs.dagger.android.compiler)
     // Reorderable lists
     implementation(libs.reorderable)
-
+    //Retrofit
+    implementation (libs.retrofit2)
+    implementation (libs.retrofit2.converter.gson)
+    //Okhttp
+    implementation (platform(libs.okhttp3.bom))
+    implementation (libs.okhttp3)
+    implementation (libs.okhttp3.logging.interceptor)
 
     //Modules
     implementation(project(":remote_module"))

@@ -48,21 +48,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.itskidan.core_api.entity.Currency
 import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
-import com.itskidan.currencyexchangeapp.utils.CurrencyUtils
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -77,12 +77,13 @@ fun AddCurrencyScreen(
     val scope = rememberCoroutineScope()
 
     // create Data
-    val activeCurrencyListFromDB by viewModel.databaseFromDB.collectAsState(initial = emptyList())
-    var selectedCurrenciesList by remember { mutableStateOf(listOf<Currency>()) }
+    val activeCurrencyList by viewModel.activeCurrencyList.collectAsState(initial = emptyList())
+    var selectedCurrenciesList by remember { mutableStateOf(listOf<String>()) }
     var otherCurrenciesList by remember { mutableStateOf(listOf<String>()) }
-    LaunchedEffect(activeCurrencyListFromDB) {
-        selectedCurrenciesList = activeCurrencyListFromDB
-        otherCurrenciesList = viewModel.getOtherCurrenciesList(activeCurrencyListFromDB)
+
+    LaunchedEffect(activeCurrencyList) {
+        selectedCurrenciesList = activeCurrencyList
+        otherCurrenciesList = viewModel.getOtherCurrenciesList(activeCurrencyList)
     }
 
     // For Reordering
@@ -95,18 +96,11 @@ fun AddCurrencyScreen(
 
     // Search system
     var searchText by remember { mutableStateOf("") }
-    var searchingSelectedCurrenciesList by remember { mutableStateOf(listOf<Currency>()) }
+    var searchingSelectedCurrenciesList by remember { mutableStateOf(listOf<String>()) }
     var searchingOtherCurrenciesList by remember { mutableStateOf(listOf<String>()) }
-    searchingSelectedCurrenciesList =
-        selectedCurrenciesList.filter {
-            it.currencyCode.contains(searchText, ignoreCase = true)
-                    || it.currencyName.contains(searchText, ignoreCase = true)
-        }
-    searchingOtherCurrenciesList =
-        otherCurrenciesList.filter {
-            it.contains(searchText, ignoreCase = true) ||
-                    viewModel.getCurrencyName(it).contains(searchText, ignoreCase = true)
-        }
+    searchingSelectedCurrenciesList = viewModel.filterBySearch(selectedCurrenciesList,searchText)
+    searchingOtherCurrenciesList =viewModel.filterBySearch(otherCurrenciesList,searchText)
+
     LaunchedEffect(searchText) {
         lazyListState.scrollToItem(index = 0)
     }
@@ -117,7 +111,7 @@ fun AddCurrencyScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         scope.launch {
-                            viewModel.updateDatabase(selectedCurrenciesList.toMutableList())
+                            viewModel.updateActiveCurrencyList(selectedCurrenciesList)
                         }
                         navController.popBackStack()
                     }) {
@@ -133,7 +127,8 @@ fun AddCurrencyScreen(
                         value = searchText,
                         onValueChange = { searchText = it },
                         singleLine = true,
-                        textStyle = MaterialTheme.typography.titleLarge,
+                        textStyle = MaterialTheme.typography.titleLarge + TextStyle(MaterialTheme.colorScheme.outline),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.outline),
                         maxLines = 1,
                         decorationBox = { innerTextField ->
                             Box(
@@ -167,8 +162,8 @@ fun AddCurrencyScreen(
                 // Active currency
                 itemsIndexed(
                     searchingSelectedCurrenciesList,
-                    key = { _, currency -> currency.currencyCode }) { index, item ->
-                    ReorderableItem(reorderableLazyColumnState, item.currencyCode) {
+                    key = { _, currencyCode -> currencyCode }) { index, currencyCode ->
+                    ReorderableItem(reorderableLazyColumnState, currencyCode) {
                         val interactionSource = remember { MutableInteractionSource() }
 
                         Card(
@@ -176,10 +171,10 @@ fun AddCurrencyScreen(
                             onClick = {
                                 scope.launch {
                                     selectedCurrenciesList =
-                                        selectedCurrenciesList.filterNot { it == item }
+                                        selectedCurrenciesList.filterNot { it == currencyCode }
                                     otherCurrenciesList =
                                         otherCurrenciesList.toMutableList().apply {
-                                            add(item.currencyCode)
+                                            add(currencyCode)
                                         }.sorted()
                                 }
                             },
@@ -252,8 +247,7 @@ fun AddCurrencyScreen(
                                 ) {
                                     Image(
                                         painter = painterResource(
-                                            id = CurrencyUtils.currencyFlagMap[item.currencyCode]
-                                                ?: 0
+                                            id = viewModel.getCurrencyFlag(currencyCode)
                                         ),
                                         contentDescription = "Currency Flag Country",
                                         modifier = Modifier
@@ -279,7 +273,7 @@ fun AddCurrencyScreen(
                                         ) {
                                             Text(
                                                 modifier = Modifier.fillMaxWidth(),
-                                                text = item.currencyCode,
+                                                text = currencyCode,
                                                 textAlign = TextAlign.Start,
                                                 style = MaterialTheme.typography.titleLarge
 
@@ -292,7 +286,7 @@ fun AddCurrencyScreen(
                                         ) {
                                             Text(
                                                 modifier = Modifier.fillMaxWidth(),
-                                                text = item.currencyName,
+                                                text = viewModel.getCurrencyName(currencyCode),
                                                 textAlign = TextAlign.Start,
                                                 style = MaterialTheme.typography.titleMedium
 
@@ -354,7 +348,7 @@ fun AddCurrencyScreen(
                                 selectedCurrenciesList = selectedCurrenciesList
                                     .toMutableList()
                                     .apply {
-                                        add(viewModel.createNewCurrency(currencyCode))
+                                        add(currencyCode)
                                     }
                                 otherCurrenciesList = otherCurrenciesList
                                     .filterNot { it == currencyCode }.sorted()
@@ -454,3 +448,4 @@ fun AddCurrencyScreen(
         }
     }
 }
+

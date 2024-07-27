@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.itskidan.currencyexchangeapp.ui.home
 
+import android.app.Activity
 import android.content.Context
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -50,12 +56,16 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,6 +78,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -80,16 +91,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.itskidan.core_api.entity.Currency
 import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -97,16 +107,35 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Set a flag to prevent sleep mode
+    KeepScreenOn(context)
+
     //create ScreenSize
     val screenWidthInDp = App.instance.screenWidthInDp
-    //create Data
-    val currencyList by viewModel.databaseFromDB.collectAsState(initial = emptyList())
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
 
+    var isRefreshing by remember { mutableStateOf(false) }
+
+
+    // Initialize state
+    var lastSelectedIndex by remember { mutableIntStateOf(-1) }
+    var lastSelectedValue by remember { mutableStateOf("0") }
+
+    //create Data
+    val activeCurrencyList by viewModel.activeCurrencyList.collectAsState(initial = emptyList())
+
+    LaunchedEffect(activeCurrencyList) {
+        if (activeCurrencyList.isNotEmpty()) {
+            val (index, value) = viewModel.getSelectedPositionAndValue()
+            lastSelectedIndex = index
+            lastSelectedValue = value
+        }
+    }
+    // Drawer menu
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     // icons to mimic drawer destinations
     val items = viewModel.getIconsForDrawerMenu()
     val selectedItem = remember { mutableStateOf(items[0]) }
-
 
 
     ModalNavigationDrawer(
@@ -226,44 +255,140 @@ fun HomeScreen(
                 }
             }
         ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                LazyColumn(
-                    Modifier
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(LocalPaddingValues.current.small),
-
-                    ) {
-                    items(currencyList) { currency ->
-                        CurrencyListItemForHomeScreen(
-                            currency = currency,
-                            screenWidthInDp = screenWidthInDp,
-                            viewModel = viewModel,
-                            context = context,
-                            scope = scope
-                        )
+            PullToRefreshLazyColumn(
+                innerPadding = innerPadding,
+                scope = scope,
+                viewModel = viewModel,
+                activeCurrencyList = activeCurrencyList,
+                lastSelectedIndex = lastSelectedIndex,
+                lastSelectedValue = lastSelectedValue,
+                screenWidthInDp = screenWidthInDp,
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    scope.launch {
+                        isRefreshing = true
+                        viewModel.updateDatabaseRates()
+                        delay(500)
+                        isRefreshing = false
                     }
                 }
-            }
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PullToRefreshLazyColumn(
+    innerPadding: PaddingValues,
+    scope: CoroutineScope,
+    viewModel: HomeScreenViewModel,
+    activeCurrencyList: List<String>,
+    lastSelectedIndex: Int,
+    lastSelectedValue: String,
+    screenWidthInDp: Int,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    lazyListState: LazyListState = rememberLazyListState()
+) {
+
+
+    val pullToRefreshState = rememberPullToRefreshState()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .nestedScroll(pullToRefreshState.nestedScrollConnection)
+    ) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(LocalPaddingValues.current.small),
+
+            ) {
+            item {
+                UpdateFieldForHomeScreen(
+                    viewModel = viewModel
+                )
+            }
+            itemsIndexed(activeCurrencyList) { index, currencyCode ->
+                // Check if this item was the last selected one
+                val isLastSelected = index == lastSelectedIndex
+                CurrencyListItemForHomeScreen(
+                    currencyCode = currencyCode,
+                    lastSelectedValue = lastSelectedValue,
+                    index = index,
+                    screenWidthInDp = screenWidthInDp,
+                    viewModel = viewModel,
+                    scope = scope,
+                    isInitiallyFocused = isLastSelected
+                )
+            }
+
+        }
+        if (pullToRefreshState.isRefreshing) {
+            LaunchedEffect(true) {
+                onRefresh()
+            }
+        }
+
+        LaunchedEffect(isRefreshing) {
+            if (isRefreshing) {
+                pullToRefreshState.startRefresh()
+            } else {
+                pullToRefreshState.endRefresh()
+            }
+        }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter),
+        )
+    }
+
+
+}
+
+
 @Composable
 fun CurrencyListItemForHomeScreen(
-    currency: Currency,
+    currencyCode: String,
+    lastSelectedValue: String,
+    index: Int,
     screenWidthInDp: Int,
     viewModel: HomeScreenViewModel = viewModel(),
-    context: Context,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    isInitiallyFocused: Boolean
 ) {
-    val textState = remember { mutableStateOf(TextFieldValue()) }
+    val textState = remember { mutableStateOf(TextFieldValue("")) }
     val focusRequester = remember { FocusRequester() }
     val isFocusedTextField = remember { mutableStateOf(false) }
     val isFocusedCalculator = remember { mutableStateOf(false) }
+
+    val currentInput by viewModel.currentInput.collectAsState()
+    val ratesFromDatabase by viewModel.ratesFromDatabase.collectAsState(emptyMap())
+
+    LaunchedEffect(ratesFromDatabase, currentInput, isFocusedTextField) {
+        if (ratesFromDatabase.isNotEmpty() || !isFocusedTextField.value) {
+            val text = viewModel.getCalculatedRate(currencyCode, currentInput)
+            textState.value = TextFieldValue(
+                text = text,
+                selection = TextRange(text.length)
+            )
+        }
+    }
+
+    LaunchedEffect(isInitiallyFocused) {
+        if (isInitiallyFocused) {
+            focusRequester.requestFocus()
+            textState.value = TextFieldValue(
+                text = lastSelectedValue,
+                selection = TextRange(lastSelectedValue.length)
+            )
+        }
+    }
+
     Card(
         shape = RectangleShape,
         onClick = {
@@ -293,9 +418,7 @@ fun CurrencyListItemForHomeScreen(
             ) {
                 Image(
                     imageVector = ImageVector.vectorResource(
-                        viewModel.getCurrencyFlag(
-                            currency.currencyCode
-                        )
+                        viewModel.getCurrencyFlag(currencyCode)
                     ),
                     contentDescription = "Currency Flag Country",
                     modifier = Modifier
@@ -314,7 +437,7 @@ fun CurrencyListItemForHomeScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = currency.currencyCode,
+                    text = currencyCode,
                     textAlign = TextAlign.Center,
                     color = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLarge
@@ -349,30 +472,18 @@ fun CurrencyListItemForHomeScreen(
                     value = textState.value,
                     onValueChange = { newValue ->
                         // We limit the input rules (numbers and one comma)
-                        if (newValue.text.all {
-                                "0123456789,.".contains(it)
-                            }) {
-                            var newText = newValue.text.replace(".", ",")
-                            if (newText.count { it == ',' } <= 1) {
-                                if (newText.indexOf(',') == 0) {
-                                    newText = "0$newText"
-                                }
-                                if (newText.length >= 2 && !newText.contains(',') && newText.startsWith(
-                                        '0'
-                                    )
-                                ) {
-                                    newText = newText.drop(1)
-                                }
-                                textState.value =
-                                    TextFieldValue(
-                                        newText,
-                                        selection = TextRange(newText.length)
-                                    )
-                            }
-                        }
+                        val validatedValue = viewModel.validateAndFormatInput(newValue.text)
+                        textState.value = TextFieldValue(
+                            validatedValue,
+                            selection = TextRange(validatedValue.length)
+                        )
+                        viewModel.updateCurrentInput(currencyCode, validatedValue)
+                        viewModel.saveSelectedPositionAndValue(
+                            position = index,
+                            value = validatedValue
+                        )
                     },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End) + MaterialTheme.typography.titleLarge,
-                    placeholder = { Text(stringResource(R.string.home_screen_text_field_rate_placeholder)) },
                     singleLine = true,
                     maxLines = 1,
                     modifier = Modifier
@@ -385,23 +496,13 @@ fun CurrencyListItemForHomeScreen(
                         .heightIn(min = 56.dp)
                         .onFocusChanged { focusState ->
                             isFocusedTextField.value = focusState.isFocused
+                            viewModel.updateCurrentInput(currencyCode, textState.value.text)
                         }
                         .focusRequester(focusRequester),
 
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
-                    ),
-                    colors = TextFieldDefaults.colors(
-//                                            focusedContainerColor = Color.White,
-//                                            unfocusedContainerColor = Color.White,
-//                                            disabledContainerColor = Color.White,
-//                                            focusedTextColor = Color.Black,
-//                                            unfocusedTextColor = Color.Black,
-//                                            disabledTextColor = Color.Black,
-//                                            cursorColor = Color.Blue,
-//                                            focusedIndicatorColor = Color.Transparent,
-//                                            unfocusedIndicatorColor = Color.Transparent
                     ),
                 )
             }
@@ -413,20 +514,13 @@ fun CurrencyListItemForHomeScreen(
                     .clickable(
                         onClick = {
                             scope.launch {
-                                textState.value = TextFieldValue(
-                                    text = "",
-                                    selection = TextRange("".length)
+                                viewModel.saveSelectedPositionAndValue(
+                                    position = index,
+                                    value = textState.value.text
                                 )
                                 focusRequester.requestFocus()
                                 isFocusedCalculator.value =
                                     !isFocusedCalculator.value
-                                Toast
-                                    .makeText(
-                                        context,
-                                        "Calculate icon clicked",
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    .show()
                             }
                         }),
                 contentAlignment = Alignment.Center,
@@ -442,5 +536,51 @@ fun CurrencyListItemForHomeScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun UpdateFieldForHomeScreen(
+    viewModel: HomeScreenViewModel
+) {
+    val lastUpdateTimeRates by viewModel.lastUpdateTimeRates.collectAsState(initial = 0L)
+    var updateTime by remember { mutableStateOf("") }
+    LaunchedEffect(lastUpdateTimeRates) {
+        if (lastUpdateTimeRates > 0L) {
+            updateTime = viewModel.getFormattedCurrentTime(lastUpdateTimeRates)
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        horizontalArrangement = Arrangement.Absolute.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (updateTime.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .height(40.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Updated: $updateTime",
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+
+}
+
+
+@Composable
+fun KeepScreenOn(context: Context) {
+    SideEffect {
+        val activity = context as? Activity
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
