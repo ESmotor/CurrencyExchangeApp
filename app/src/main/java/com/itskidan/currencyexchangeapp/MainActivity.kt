@@ -1,18 +1,17 @@
 package com.itskidan.currencyexchangeapp
 
+import android.content.Context
 import android.os.Bundle
+import android.util.DisplayMetrics
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import com.itskidan.core_api.entity.Currency
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import com.itskidan.currencyexchangeapp.ui.navigation.NavGraph
 import com.itskidan.currencyexchangeapp.ui.theme.AppTheme
-import com.itskidan.currencyexchangeapp.utils.CurrencyUtils
-import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
@@ -23,9 +22,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         App.instance.dagger.inject(this)
-
-//        updateDataBase()
-
+        App.instance.screenWidthInDp = getScreenWidthInDp(this)
+        App.instance.screenHeightInDp = getScreenHeightInDp(this)
+        Timber.tag("MyLog").d("ScreenSize: (W:${App.instance.screenWidthInDp},H:${App.instance.screenHeightInDp})")
         setContent {
             //observer in the activity
             lifecycle.addObserver(App.instance.lifecycleObserver)
@@ -36,34 +35,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun updateDataBase() {
-        lifecycleScope.launch {
-            CurrencyUtils.currencyFlagMap.map { (key, value) ->
-                val currencyName = when (key) {
-                    "USD" -> "United State Dollar"
-                    "RUB" -> "Russian Ruble"
-                    "TRY" -> "Turkish Lira"
-                    "CNY" -> "Chinese Yuan"
-                    "CHF" -> "Swiss Franc"
-                    "KZT" -> "Kazakhstan Tenge"
-                    "EUR" -> "European Union Euro"
-                    else -> "unknown currency"
-                }
-                val currencyBidValue = (10000..20000).random() / 100.0
-                val currencyAskValue = currencyBidValue + (0..200).random() / 100.0
 
-                interactor.putCurrencyToDB(
-                    Currency(
-                        currencyCode = key,
-                        currencyName = currencyName,
-                        currencyFlagId = value,
-                        currencyAskValue = currencyAskValue,
-                        currencyBidValue = currencyBidValue
-                    )
-                )
-            }
-        }
+    private fun getScreenWidthInDp(context: Context): Int {
+        val displayMetrics: DisplayMetrics = context.resources.displayMetrics
+        val result = (displayMetrics.widthPixels / displayMetrics.density).toInt()
+        return result
     }
+
+    private fun getScreenHeightInDp(context: Context): Int {
+        val displayMetrics: DisplayMetrics = context.resources.displayMetrics
+        val result = (displayMetrics.heightPixels / displayMetrics.density).toInt()
+        return result
+    }
+
+
 }
 
 

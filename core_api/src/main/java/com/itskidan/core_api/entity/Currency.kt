@@ -12,13 +12,11 @@ import kotlinx.parcelize.Parcelize
     indices = [Index(value = ["currencyCode"], unique = true)]
 )
 data class Currency(
+    var id: Int,
     @PrimaryKey(autoGenerate = false) val currencyCode: String,
-    val currencyName: String,
-    val currencyFlagId: Int,
-    val currencyAskValue: Double,
-    val currencyBidValue: Double
+    var currencyRate: Double,
 ) : Parcelable {
     override fun toString(): String {
-        return "Code:$currencyCode, Name:$currencyName, Value:$currencyAskValue"
+        return "id:$id, Code:$currencyCode, Rate:$currencyRate"
     }
 }

@@ -12,6 +12,8 @@ materialIconsExtended = "1.6.8"
 navigationCompose = "2.7.7"
 uiTextGoogleFonts = "1.6.8"
 devtoolsKsp = "2.0.0-1.0.22"
+#Reoederable
+reorderable = "2.1.1"
 #Dagger
 daggerAndroid = "2.51.1"
 #Room
@@ -25,6 +27,11 @@ coroutines = "1.7.1"
 jetbrainsKotlinJvm = "1.9.0"
 appcompat = "1.7.0"
 material = "1.12.0"
+#Retrofit
+retrofit = "2.11.0"
+retrofitConverterGson = "2.6.0"
+#okhttp3
+okhttp3Bom = "4.12.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -64,11 +71,19 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRunt
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+#Reorderable
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+#okhttp3
+okhttp3-bom = {group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp3Bom"}
+okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp" }
+okhttp3-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor" }
+#Retrofit
+retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+retrofit2-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofitConverterGson" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "devtoolsKsp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-
-
