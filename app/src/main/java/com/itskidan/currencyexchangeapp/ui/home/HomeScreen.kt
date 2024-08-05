@@ -458,18 +458,6 @@ fun CurrencyListItemForHomeScreen(
 
         }
     }
-    LaunchedEffect(ratesFromDatabase) {
-        if (ratesFromDatabase.isNotEmpty()) {
-            if ( !isFocusedTextField.value) {
-                val text = viewModel.getCalculatedRate(currencyCode, currentInput)
-                textState.value = TextFieldValue(
-                    text = text,
-                    selection = TextRange(text.length)
-                )
-            }
-        }
-    }
-
 
     LaunchedEffect(isInitiallyFocused) {
         if (isInitiallyFocused) {
