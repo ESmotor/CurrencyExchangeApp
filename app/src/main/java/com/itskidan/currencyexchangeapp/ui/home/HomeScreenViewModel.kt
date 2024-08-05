@@ -55,17 +55,62 @@ class HomeScreenViewModel : ViewModel() {
     val lastUpdateTimeRates: StateFlow<Long>
         get() = interactor.getLastUpdateCurrencyRates()
 
+    private var activeCodeList: List<String> = listOf()
+    private var activeRatesFromDataBase: Map<String, Double> = mapOf()
 
-    private val _currentInput = MutableStateFlow(Pair("", ""))
-    val currentInput: StateFlow<Pair<String, String>> = _currentInput
+    private var _currentInput = Pair("", "")
     private val currencyCodeList: List<String>
         get() = interactor.getCurrencyCodeList()
+
+    private val _calculatedRates = MutableStateFlow<Map<String, String>>(emptyMap())
+    val calculatedRates: MutableStateFlow<Map<String, String>> get() = _calculatedRates
 
     init {
         App.instance.dagger.inject(this)
         viewModelScope.launch(Dispatchers.IO) {
             updateDatabaseRates()
         }
+    }
+
+    suspend fun updateActiveListAndRates() {
+        activeCodeList = activeCurrencyList.value
+        activeRatesFromDataBase = ratesFromDatabase.first().filter {
+            activeCodeList.contains(it.key)
+        }
+    }
+
+    fun updateCurrentInput(code: String, value: String) {
+        Timber.tag("MyLog").d("method: updateCurrentInput($code,$value)")
+        _currentInput = Pair(code, value.ifEmpty { "0.0" })
+    }
+
+    fun updateCalculatedRates() {
+        Timber.tag("MyLog").d("method: updateCalculatedRates()")
+        val (inputCode, inputValue) = _currentInput
+        val inputDoubleValue = inputValue.toDoubleOrNull() ?: 0.0
+        val ratesMap = activeRatesFromDataBase
+        val activeCurrencyCodes = activeCodeList
+
+        val resultCalculatedRatesMap = activeCurrencyCodes.associateWith { currencyCode ->
+            when {
+                currencyCode == inputCode -> inputValue
+                else -> {
+                    val currentRate = ratesMap[inputCode] ?: return@associateWith "0"
+                    val quotedRate = ratesMap[currencyCode] ?: return@associateWith "0"
+                    if (currentRate != 0.0 && quotedRate != 0.0) {
+                        val calculatedValue = quotedRate / currentRate * inputDoubleValue
+                        formatDoubleToString(calculatedValue)
+                    } else {
+                        "0"
+                    }
+                }
+            }
+        }
+        _calculatedRates.value = resultCalculatedRatesMap
+    }
+
+    fun getCalculatedRateByCode(code: String): String {
+        return _calculatedRates.value[code] ?: "0"
     }
 
     fun getCurrencyFlag(currencyCode: String): Int {
@@ -93,22 +138,6 @@ class HomeScreenViewModel : ViewModel() {
             Icons.Default.QrCode,
             Icons.Default.Radio,
         )
-    }
-
-    suspend fun getCalculatedRate(quotedCode: String, currentInput: Pair<String, String>): String {
-        val (currentCode, currentValue) = currentInput
-        if (quotedCode == currentCode) {
-            return currentValue
-        }
-        val ratesFromApi = ratesFromDatabase.first()
-        val currentRateApi = ratesFromApi[currentCode] ?: 0.0
-        val quotedRateApi = ratesFromApi[quotedCode] ?: 0.0
-        if (quotedRateApi != 0.0 && currentRateApi != 0.0) {
-            val value = quotedRateApi / currentRateApi * (currentValue.toDoubleOrNull() ?: 0.0)
-            return formatDoubleToString(value)
-        } else {
-            return "0"
-        }
     }
 
     fun validateAndFormatInput(newValue: String): String {
@@ -156,14 +185,9 @@ class HomeScreenViewModel : ViewModel() {
     }
 
 
-    fun updateCurrentInput(code: String, value: String) {
-        Timber.tag("MyLog").d("method: updateCurrentInput($code,$value)")
-        _currentInput.value = Pair(code, value.ifEmpty { "0.0" })
-    }
-
-
     // Work with sharedPreferences
     fun saveSelectedPositionAndValue(position: Int, value: String) {
+        Timber.tag("MyLog").d("method: saveSelectedPositionAndValueInList($position,$value)")
         viewModelScope.launch(Dispatchers.IO) {
             interactor.saveSelectedPositionAndValue(position, value)
         }
@@ -174,13 +198,7 @@ class HomeScreenViewModel : ViewModel() {
         val validIndex = activeCurrencyList.value.indices.contains(index)
         val correctedIndex = if (validIndex) index else 0
         val correctedValue = if (validIndex) value else "1"
-        if (activeCurrencyList.value.isNotEmpty()) {
-            val code = activeCurrencyList.value[correctedIndex]
-            updateCurrentInput(code, correctedValue)
-        }
-        if (!validIndex) {
-            saveSelectedPositionAndValue(correctedIndex, correctedValue)
-        }
+        Timber.tag("MyLog").d("method: getSelectedPositionAndValue($correctedIndex,$correctedValue)")
         return Pair(correctedIndex, correctedValue)
     }
 
@@ -207,7 +225,6 @@ class HomeScreenViewModel : ViewModel() {
         val lastUpdateTime = lastUpdateTimeRates.value
         val result =
             currentTime - lastUpdateTime > TimeUnit.MINUTES.toMillis(Constants.MIN_TIME_FOR_UPDATE_DATABASE)
-        Timber.tag("MyLog").d("method: isDatabaseUpdateTime($result)")
         return result
     }
 
@@ -216,6 +233,10 @@ class HomeScreenViewModel : ViewModel() {
             interactor.updateDatabase(codeList)
             interactor.saveUpdateTimeCurrencyRates()
         }
+        interactor.updateDatabase(codeList)
+        interactor.saveUpdateTimeCurrencyRates()
+
+
         Timber.tag("MyLog").d("method: updateDatabaseRates()")
     }
 }

@@ -175,8 +175,6 @@ class MainRepository @Inject constructor(
     suspend fun saveSelectedPositionAndValue(position: Int, value: String) {
         try {
             withContext(Dispatchers.IO) {
-                Timber.tag("MyLog")
-                    .d("method: saveSelectedPositionAndValueInList($position,$value)")
                 val newValue = if (value == "0." || value == "") "0" else value
                 sharedPreferences
                     .edit()
@@ -221,7 +219,6 @@ class MainRepository @Inject constructor(
     fun getSelectedPositionAndValue(): Pair<Int, String> {
         val index = sharedPreferences.getInt(Constants.HOME_SCREEN_LIST_POSITION, 0)
         val value = sharedPreferences.getString(Constants.HOME_SCREEN_POSITION_VALUE, "1") ?: "1"
-        Timber.tag("MyLog").d("method: loadSelectedPositionAndValue($index,$value)")
         return Pair(index, value)
     }
 

@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
         App.instance.dagger.inject(this)
         App.instance.screenWidthInDp = getScreenWidthInDp(this)
         App.instance.screenHeightInDp = getScreenHeightInDp(this)
+        Timber.tag("MyLog").d("ScreenSize: (W:${App.instance.screenWidthInDp},H:${App.instance.screenHeightInDp})")
         setContent {
             //observer in the activity
             lifecycle.addObserver(App.instance.lifecycleObserver)
@@ -38,14 +39,12 @@ class MainActivity : ComponentActivity() {
     private fun getScreenWidthInDp(context: Context): Int {
         val displayMetrics: DisplayMetrics = context.resources.displayMetrics
         val result = (displayMetrics.widthPixels / displayMetrics.density).toInt()
-        Timber.tag("MyLog").d("width = %s", result)
         return result
     }
 
     private fun getScreenHeightInDp(context: Context): Int {
         val displayMetrics: DisplayMetrics = context.resources.displayMetrics
         val result = (displayMetrics.heightPixels / displayMetrics.density).toInt()
-        Timber.tag("MyLog").d("height = %s", result)
         return result
     }
 

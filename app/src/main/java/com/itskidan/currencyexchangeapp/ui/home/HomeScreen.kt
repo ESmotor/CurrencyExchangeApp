@@ -16,13 +16,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -63,6 +65,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -79,11 +82,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextRange
@@ -98,8 +103,10 @@ import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @Composable
@@ -113,30 +120,29 @@ fun HomeScreen(
     // Set a flag to prevent sleep mode
     KeepScreenOn(context)
 
-    //create ScreenSize
     var isRefreshing by remember { mutableStateOf(false) }
 
+    val textStateFromKeyboard = remember { mutableStateOf(TextFieldValue("")) }
 
     // Initialize state
     var lastSelectedIndex by remember { mutableIntStateOf(-1) }
     var lastSelectedValue by remember { mutableStateOf("0") }
 
-    //create Data
-    val activeCurrencyList by viewModel.activeCurrencyList.collectAsState(initial = emptyList())
-
-    LaunchedEffect(activeCurrencyList) {
-        if (activeCurrencyList.isNotEmpty()) {
-            val (index, value) = viewModel.getSelectedPositionAndValue()
-            lastSelectedIndex = index
-            lastSelectedValue = value
-        }
+    LaunchedEffect(Unit) {
+        val (index, value) = viewModel.getSelectedPositionAndValue()
+        lastSelectedIndex = index
+        lastSelectedValue = value
+        textStateFromKeyboard.value =
+            TextFieldValue(lastSelectedValue, TextRange(lastSelectedValue.length))
     }
+
     // Drawer menu
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     // icons to mimic drawer destinations
     val items = viewModel.getIconsForDrawerMenu()
     val selectedItem = remember { mutableStateOf(items[0]) }
 
+    Timber.tag("MyLog").d("Home Screen")
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -248,30 +254,79 @@ fun HomeScreen(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    navController.navigate(Constants.ADD_CURRENCY)
-                }) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.ime),
+                    onClick = {
+                        navController.navigate(Constants.ADD_CURRENCY)
+                    }) {
                     Icon(Icons.Default.Add, contentDescription = "Add")
                 }
             }
         ) { innerPadding ->
-            PullToRefreshLazyColumn(
-                innerPadding = innerPadding,
-                scope = scope,
-                viewModel = viewModel,
-                activeCurrencyList = activeCurrencyList,
-                lastSelectedIndex = lastSelectedIndex,
-                lastSelectedValue = lastSelectedValue,
-                isRefreshing = isRefreshing,
-                onRefresh = {
-                    scope.launch {
-                        isRefreshing = true
-                        viewModel.updateDatabaseRates()
-                        delay(500)
-                        isRefreshing = false
-                    }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(58f)
+                        .fillMaxSize()
+                ) {
+                    PullToRefreshLazyColumn(
+                        scope = scope,
+                        viewModel = viewModel,
+                        lastSelectedIndex = lastSelectedIndex,
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            scope.launch {
+                                isRefreshing = true
+                                viewModel.updateDatabaseRates()
+                                delay(500)
+                                isRefreshing = false
+                            }
+                        },
+                        onFocusChange = { index, value ->
+                            Timber.tag("MyLog").d("PullToRefreshLazyColumn: onFocusChange()")
+                            lastSelectedIndex = index
+                            lastSelectedValue = value
+                        },
+                        textStateFromKeyboard = textStateFromKeyboard.value,
+                        onTextChange = { newTextState ->
+                            textStateFromKeyboard.value = newTextState
+                        }
+                    )
+
                 }
-            )
+                Box(
+                    modifier = Modifier
+                        .weight(32f)
+                        .fillMaxSize()
+                ) {
+                    KeyboardForTyping(
+                        scope = scope,
+                        textState = textStateFromKeyboard.value,
+                        onTextChange = { newTextState ->
+                            textStateFromKeyboard.value = newTextState
+                        })
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(10f)
+                        .background(Color.Gray)
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Advertising Space",
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            }
         }
     }
 }
@@ -279,23 +334,47 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PullToRefreshLazyColumn(
-    innerPadding: PaddingValues,
     scope: CoroutineScope,
     viewModel: HomeScreenViewModel,
-    activeCurrencyList: List<String>,
     lastSelectedIndex: Int,
-    lastSelectedValue: String,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    lazyListState: LazyListState = rememberLazyListState()
+    onFocusChange: (Int, String) -> Unit,
+    lazyListState: LazyListState = rememberLazyListState(),
+    textStateFromKeyboard: TextFieldValue,
+    onTextChange: (TextFieldValue) -> Unit
 ) {
-
-
     val pullToRefreshState = rememberPullToRefreshState()
+    val calculatedRates by viewModel.calculatedRates.collectAsState(emptyMap())
+    val activeCurrencyList by viewModel.activeCurrencyList.collectAsState(initial = emptyList())
+    val ratesFromDatabase by viewModel.ratesFromDatabase.collectAsState(initial = emptyMap())
+
+    LaunchedEffect(activeCurrencyList) {
+        if (activeCurrencyList.isNotEmpty()) {
+            Timber.tag("MyLog").d("PullToRefreshLazyColumn: UpdateActiveListAndRates()")
+            viewModel.updateActiveListAndRates()
+        }
+    }
+
+    LaunchedEffect(ratesFromDatabase) {
+        if (ratesFromDatabase.isNotEmpty()) {
+            Timber.tag("MyLog").d("PullToRefresh: RatesFromDatabaseChanged-UpdateCalculatedRates()")
+            viewModel.updateCalculatedRates()
+        }
+    }
+
+    LaunchedEffect(textStateFromKeyboard) {
+        if (lastSelectedIndex != -1) {
+            Timber.tag("MyLog").d("PullToRefresh: TextStateFromKeyboard change($textStateFromKeyboard)")
+            viewModel.saveSelectedPositionAndValue(lastSelectedIndex, textStateFromKeyboard.text)
+        }
+    }
+
+    Timber.tag("MyLog").d("PullToRefreshLazyColumn")
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding)
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
         LazyColumn(
@@ -313,16 +392,19 @@ fun PullToRefreshLazyColumn(
                 // Check if this item was the last selected one
                 val isLastSelected = index == lastSelectedIndex
                 CurrencyListItemForHomeScreen(
-                    currencyCode = currencyCode,
-                    lastSelectedValue = lastSelectedValue,
-                    index = index,
                     viewModel = viewModel,
                     scope = scope,
-                    isInitiallyFocused = isLastSelected
+                    currencyCode = currencyCode,
+                    isInitiallyFocused = isLastSelected,
+                    index = index,
+                    textStateFromKeyboard = textStateFromKeyboard,
+                    calculatedRates = calculatedRates,
+                    onFocusChange = onFocusChange,
+                    onTextChange = onTextChange
                 )
             }
-
         }
+
         if (pullToRefreshState.isRefreshing) {
             LaunchedEffect(true) {
                 onRefresh()
@@ -343,37 +425,36 @@ fun PullToRefreshLazyColumn(
                 .align(Alignment.TopCenter),
         )
     }
-
-
 }
 
 
 @Composable
 fun CurrencyListItemForHomeScreen(
-    currencyCode: String,
-    lastSelectedValue: String,
-    index: Int,
     viewModel: HomeScreenViewModel = viewModel(),
     scope: CoroutineScope,
-    isInitiallyFocused: Boolean
+    currencyCode: String,
+    index: Int,
+    isInitiallyFocused: Boolean,
+    textStateFromKeyboard: TextFieldValue,
+    calculatedRates: Map<String, String>,
+    onFocusChange: (Int, String) -> Unit,
+    onTextChange: (TextFieldValue) -> Unit
 ) {
-    val textState = remember { mutableStateOf(TextFieldValue("")) }
+    val textStateNotFocused = remember { mutableStateOf(TextFieldValue("")) }
     val focusRequester = remember { FocusRequester() }
     val isFocusedTextField = remember { mutableStateOf(false) }
     val isFocusedCalculator = remember { mutableStateOf(false) }
-
-    val currentInput by viewModel.currentInput.collectAsState()
-    val ratesFromDatabase by viewModel.ratesFromDatabase.collectAsState(emptyMap())
-
     val itemHeight = 60.dp
 
-    LaunchedEffect( currentInput, isFocusedTextField) {
-        if ( !isFocusedTextField.value) {
-            val text = viewModel.getCalculatedRate(currencyCode, currentInput)
-            textState.value = TextFieldValue(
-                text = text,
-                selection = TextRange(text.length)
-            )
+    Timber.tag("MyLog")
+        .d("CurrencyList, Code:$currencyCode, isFocusedTextField: ${isFocusedTextField.value}, isInitiallyFocused:$isInitiallyFocused, TextState: ${textStateFromKeyboard.text}")
+
+    LaunchedEffect(calculatedRates, isFocusedTextField) {
+        if (calculatedRates.isNotEmpty() && !isFocusedTextField.value) {
+            val currencyRate = calculatedRates[currencyCode] ?: "0"
+            Timber.tag("MyLog").d("CurrencyList, Code:$currencyCode, currencyRate: $currencyRate")
+            textStateNotFocused.value = TextFieldValue(currencyRate)
+
         }
     }
     LaunchedEffect(ratesFromDatabase) {
@@ -388,13 +469,11 @@ fun CurrencyListItemForHomeScreen(
         }
     }
 
+
     LaunchedEffect(isInitiallyFocused) {
         if (isInitiallyFocused) {
+            Timber.tag("MyLog").d("isInitiallyFocused: $isInitiallyFocused")
             focusRequester.requestFocus()
-            textState.value = TextFieldValue(
-                text = lastSelectedValue,
-                selection = TextRange(lastSelectedValue.length)
-            )
         }
     }
 
@@ -421,6 +500,8 @@ fun CurrencyListItemForHomeScreen(
             // This is flag
             Box(
                 modifier = Modifier
+                    .weight(15f)
+
                     .padding(horizontal = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
@@ -450,6 +531,8 @@ fun CurrencyListItemForHomeScreen(
             // Name of currency
             Box(
                 modifier = Modifier
+                    .weight(15f)
+
                     .padding(start = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
@@ -464,10 +547,15 @@ fun CurrencyListItemForHomeScreen(
 
             // This is icon for change currency
             Box(
+
+                modifier = Modifier
+                    .weight(5f),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier
+                        .fillMaxSize(),
+
                     imageVector = Icons.Default.ArrowDropDown,
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Triangle list icon",
@@ -475,58 +563,67 @@ fun CurrencyListItemForHomeScreen(
             }
 
             // This is edit text for write amount
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = LocalPaddingValues.current.extraSmall),
-                contentAlignment = Alignment.Center,
+
+            CompositionLocalProvider(
+                LocalTextInputService provides null
+
             ) {
-                TextField(
-                    value = textState.value,
-                    onValueChange = { newValue ->
-                        // We limit the input rules (numbers and one comma)
-                        val validatedValue = viewModel.validateAndFormatInput(newValue.text)
-                        textState.value = TextFieldValue(
-                            validatedValue,
-                            selection = TextRange(validatedValue.length)
-                        )
-                        viewModel.updateCurrentInput(currencyCode, validatedValue)
-                        viewModel.saveSelectedPositionAndValue(
-                            position = index,
-                            value = validatedValue
-                        )
-                    },
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End) + MaterialTheme.typography.titleLarge,
-                    singleLine = true,
-                    maxLines = 1,
+                Box(
                     modifier = Modifier
-                        .shadow(
-                            elevation = LocalPaddingValues.current.extraSmall,
-                            shape = MaterialTheme.shapes.small
-                        )
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .onFocusChanged { focusState ->
-                            isFocusedTextField.value = focusState.isFocused
-                            viewModel.updateCurrentInput(currencyCode, textState.value.text)
-                        }
-                        .focusRequester(focusRequester),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    ),
-                )
+                        .weight(55f)
+                        .padding(horizontal = LocalPaddingValues.current.extraSmall),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextField(
+                        value = if (isFocusedTextField.value) {
+                            viewModel.updateCurrentInput(currencyCode, textStateFromKeyboard.text)
+                            viewModel.updateCalculatedRates()
+                            textStateFromKeyboard
+                        } else {
+                            textStateNotFocused.value
+                        },
+                        onValueChange = onTextChange,
+                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End) + MaterialTheme.typography.titleLarge,
+                        singleLine = true,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .shadow(
+                                elevation = LocalPaddingValues.current.extraSmall,
+                                shape = MaterialTheme.shapes.small
+                            )
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .onFocusChanged { focusState ->
+                                isFocusedTextField.value = focusState.isFocused
+                                if (focusState.isFocused) {
+                                    Timber
+                                        .tag("MyLog")
+                                        .d("onFocusChanged()")
+                                    onFocusChange(index, textStateFromKeyboard.text)
+                                }
+                            }
+                            .focusRequester(focusRequester),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                    )
+                }
+
             }
             // This is icon for calculator
             Box(
                 modifier = Modifier
+
+                    .weight(10f)
+
                     .padding(horizontal = LocalPaddingValues.current.extraSmall)
                     .clickable(
                         onClick = {
                             scope.launch {
                                 viewModel.saveSelectedPositionAndValue(
                                     position = index,
-                                    value = textState.value.text
+                                    value = textStateFromKeyboard.text
                                 )
                                 focusRequester.requestFocus()
                                 isFocusedCalculator.value =
@@ -538,8 +635,8 @@ fun CurrencyListItemForHomeScreen(
                 Icon(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .height(35.dp)
-                        .width(35.dp),
+                        .fillMaxSize(),
+
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     imageVector = Icons.Default.Calculate,
                     contentDescription = stringResource(R.string.home_screen_calculate_icon_description),
@@ -555,35 +652,29 @@ fun UpdateFieldForHomeScreen(
 ) {
     val lastUpdateTimeRates by viewModel.lastUpdateTimeRates.collectAsState(initial = 0L)
     var updateTime by remember { mutableStateOf("") }
+
     LaunchedEffect(lastUpdateTimeRates) {
         if (lastUpdateTimeRates > 0L) {
             updateTime = viewModel.getFormattedCurrentTime(lastUpdateTimeRates)
         }
     }
 
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant),
-        horizontalArrangement = Arrangement.Absolute.Center,
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center
     ) {
         if (updateTime.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .height(40.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Updated: $updateTime",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            Text(
+                text = "Updated: $updateTime",
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(vertical = LocalPaddingValues.current.extraSmall)
+            )
         }
     }
-
 }
 
 
@@ -594,3 +685,4 @@ fun KeepScreenOn(context: Context) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
+
