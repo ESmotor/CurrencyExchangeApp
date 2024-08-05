@@ -310,6 +310,7 @@ fun HomeScreen(
                         onTextChange = { newTextState ->
                             textStateFromKeyboard.value = newTextState
                         })
+
                 }
                 Box(
                     modifier = Modifier
