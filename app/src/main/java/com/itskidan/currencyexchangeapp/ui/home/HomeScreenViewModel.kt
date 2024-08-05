@@ -236,6 +236,7 @@ class HomeScreenViewModel : ViewModel() {
         interactor.updateDatabase(codeList)
         interactor.saveUpdateTimeCurrencyRates()
 
+
         Timber.tag("MyLog").d("method: updateDatabaseRates()")
     }
 }

@@ -298,6 +298,7 @@ fun HomeScreen(
                             textStateFromKeyboard.value = newTextState
                         }
                     )
+
                 }
                 Box(
                     modifier = Modifier
@@ -449,12 +450,23 @@ fun CurrencyListItemForHomeScreen(
     Timber.tag("MyLog")
         .d("CurrencyList, Code:$currencyCode, isFocusedTextField: ${isFocusedTextField.value}, isInitiallyFocused:$isInitiallyFocused, TextState: ${textStateFromKeyboard.text}")
 
-
     LaunchedEffect(calculatedRates, isFocusedTextField) {
         if (calculatedRates.isNotEmpty() && !isFocusedTextField.value) {
             val currencyRate = calculatedRates[currencyCode] ?: "0"
             Timber.tag("MyLog").d("CurrencyList, Code:$currencyCode, currencyRate: $currencyRate")
             textStateNotFocused.value = TextFieldValue(currencyRate)
+
+        }
+    }
+    LaunchedEffect(ratesFromDatabase) {
+        if (ratesFromDatabase.isNotEmpty()) {
+            if ( !isFocusedTextField.value) {
+                val text = viewModel.getCalculatedRate(currencyCode, currentInput)
+                textState.value = TextFieldValue(
+                    text = text,
+                    selection = TextRange(text.length)
+                )
+            }
         }
     }
 
@@ -490,6 +502,7 @@ fun CurrencyListItemForHomeScreen(
             Box(
                 modifier = Modifier
                     .weight(15f)
+
                     .padding(horizontal = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
@@ -520,6 +533,7 @@ fun CurrencyListItemForHomeScreen(
             Box(
                 modifier = Modifier
                     .weight(15f)
+
                     .padding(start = LocalPaddingValues.current.extraSmall),
                 contentAlignment = Alignment.Center,
             ) {
@@ -534,6 +548,7 @@ fun CurrencyListItemForHomeScreen(
 
             // This is icon for change currency
             Box(
+
                 modifier = Modifier
                     .weight(5f),
                 contentAlignment = Alignment.Center,
@@ -541,6 +556,7 @@ fun CurrencyListItemForHomeScreen(
                 Icon(
                     modifier = Modifier
                         .fillMaxSize(),
+
                     imageVector = Icons.Default.ArrowDropDown,
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Triangle list icon",
@@ -548,8 +564,10 @@ fun CurrencyListItemForHomeScreen(
             }
 
             // This is edit text for write amount
+
             CompositionLocalProvider(
                 LocalTextInputService provides null
+
             ) {
                 Box(
                     modifier = Modifier
@@ -592,11 +610,14 @@ fun CurrencyListItemForHomeScreen(
                         ),
                     )
                 }
+
             }
             // This is icon for calculator
             Box(
                 modifier = Modifier
+
                     .weight(10f)
+
                     .padding(horizontal = LocalPaddingValues.current.extraSmall)
                     .clickable(
                         onClick = {
@@ -616,6 +637,7 @@ fun CurrencyListItemForHomeScreen(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxSize(),
+
                     tint = if (isFocusedTextField.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     imageVector = Icons.Default.Calculate,
                     contentDescription = stringResource(R.string.home_screen_calculate_icon_description),
