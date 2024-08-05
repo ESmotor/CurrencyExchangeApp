@@ -108,20 +108,20 @@ class MainRepository @Inject constructor(
         }
     }
 
-//    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
-//        try {
-//            withContext(Dispatchers.IO) {
-//                currencyDao.clearDatabase()
-//                val updatedCurrencyRates: Map<String, Double?> =
-//                    availableCurrencyCodeList.associateWith { (100..10000).random()/100.0 }
-//                val currencyList =
-//                    prepareCurrencyListForDB(availableCurrencyCodeList, updatedCurrencyRates)
-//                currencyDao.insertAll(currencyList)
-//            }
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//        }
-//    }
+    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
+        try {
+            withContext(Dispatchers.IO) {
+                currencyDao.clearDatabase()
+                val updatedCurrencyRates: Map<String, Double?> =
+                    availableCurrencyCodeList.associateWith { (100..10000).random()/100.0 }
+                val currencyList =
+                    prepareCurrencyListForDB(availableCurrencyCodeList, updatedCurrencyRates)
+                currencyDao.insertAll(currencyList)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     private fun prepareCurrencyListForDB(
         codeList: List<String>,
@@ -173,8 +173,6 @@ class MainRepository @Inject constructor(
     suspend fun saveSelectedPositionAndValue(position: Int, value: String) {
         try {
             withContext(Dispatchers.IO) {
-                Timber.tag("MyLog")
-                    .d("method: saveSelectedPositionAndValueInList($position,$value)")
                 val newValue = if (value == "0." || value == "") "0" else value
                 sharedPreferences
                     .edit()
@@ -219,7 +217,6 @@ class MainRepository @Inject constructor(
     fun getSelectedPositionAndValue(): Pair<Int, String> {
         val index = sharedPreferences.getInt(Constants.HOME_SCREEN_LIST_POSITION, 0)
         val value = sharedPreferences.getString(Constants.HOME_SCREEN_POSITION_VALUE, "1") ?: "1"
-        Timber.tag("MyLog").d("method: loadSelectedPositionAndValue($index,$value)")
         return Pair(index, value)
     }
 
