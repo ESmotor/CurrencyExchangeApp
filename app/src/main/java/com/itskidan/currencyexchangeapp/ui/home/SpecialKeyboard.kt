@@ -1,7 +1,8 @@
 package com.itskidan.currencyexchangeapp.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +34,18 @@ import androidx.compose.ui.unit.dp
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @Composable
 fun KeyboardForTyping(
     scope: CoroutineScope,
     textState: TextFieldValue,
-    onTextChange: (TextFieldValue) -> Unit
+    isChangeFocus: Boolean,
+    onTextChange: (TextFieldValue) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    onAddCurrencies: () -> Unit,
+    onUpdateRates: () -> Unit,
+    onCalcLaunch: () -> Unit
 
 ) {
     val keys = listOf(
@@ -46,6 +54,11 @@ fun KeyboardForTyping(
         listOf("Upd", "7", "8", "9"),
         listOf("Calc", ".", "0", "X")
     )
+    Timber.tag("MyLog").d("KeyboardForTyping: isChangeFocus:$isChangeFocus, TextState: $textState")
+    LaunchedEffect(isChangeFocus) {
+        onFocusChange(isChangeFocus)
+
+    }
 
     Column(
         modifier = Modifier
@@ -69,17 +82,50 @@ fun KeyboardForTyping(
                             text = key,
                             modifier = Modifier.weight(1f),
                             onClick = {
-                                scope.launch {
-                                    val (newText, cursorPos) = validateInput(
-                                        textState = textState,
-                                        newValue = key,
-                                    )
-                                    onTextChange(
-                                        TextFieldValue(
-                                            text = newText,
-                                            selection = TextRange(cursorPos)
+                                when (key) {
+                                    "Add" -> {
+                                        onAddCurrencies()
+                                    }
+
+                                    "Upd" -> {
+                                        onUpdateRates()
+                                    }
+
+                                    "Calc" -> {
+                                        onCalcLaunch()
+                                    }
+
+                                    else -> {
+                                        scope.launch {
+                                            Timber.tag("MyLog").d("KeyButton: newText:$textState")
+                                            val (newText, cursorPos) = validateInput(
+                                                textState = textState,
+                                                newValue = key,
+                                            )
+                                            onTextChange(
+                                                TextFieldValue(
+                                                    text = newText,
+                                                    selection = TextRange(cursorPos)
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            onLongClick = {
+                                if (key == "X") {
+                                    scope.launch {
+                                        val (newText, cursorPos) = validateInput(
+                                            textState = textState,
+                                            newValue = "C",
                                         )
-                                    )
+                                        onTextChange(
+                                            TextFieldValue(
+                                                text = newText,
+                                                selection = TextRange(cursorPos)
+                                            )
+                                        )
+                                    }
                                 }
                             })
                     }
@@ -89,26 +135,30 @@ fun KeyboardForTyping(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KeyButton(
     text: String,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Box(
         modifier = modifier
             .padding(2.dp)
             .fillMaxSize()
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.inverseOnSurface)
-            .clickable(
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .combinedClickable(
                 onClick = { onClick() },
+                onLongClick = { onLongClick() },
                 indication = rememberRipple(
                     bounded = true,
                     color = MaterialTheme.colorScheme.primary
                 ),
                 interactionSource = remember { MutableInteractionSource() }
             ),
+
         contentAlignment = Alignment.Center
     ) {
         when (text) {
@@ -123,10 +173,12 @@ fun KeyButton(
                         modifier = Modifier
                             .fillMaxSize(),
                         imageVector = Icons.AutoMirrored.Filled.Backspace,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         contentDescription = "Backspace icon",
                     )
                 }
-            "Add"->
+
+            "Add" ->
                 Box(
                     modifier = Modifier
                         .padding(vertical = LocalPaddingValues.current.small)
@@ -137,10 +189,12 @@ fun KeyButton(
                         modifier = Modifier
                             .fillMaxSize(),
                         imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         contentDescription = "Add Currency icon",
                     )
                 }
-            "Upd"->
+
+            "Upd" ->
                 Box(
                     modifier = Modifier
                         .padding(vertical = LocalPaddingValues.current.small)
@@ -151,10 +205,12 @@ fun KeyButton(
                         modifier = Modifier
                             .fillMaxSize(),
                         imageVector = Icons.Default.Sync,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         contentDescription = "Add Currency icon",
                     )
                 }
-            "Calc"->
+
+            "Calc" ->
                 Box(
                     modifier = Modifier
                         .padding(vertical = LocalPaddingValues.current.small)
@@ -165,22 +221,25 @@ fun KeyButton(
                         modifier = Modifier
                             .fillMaxSize(),
                         imageVector = Icons.Default.Calculate,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         contentDescription = "Add Currency icon",
                     )
                 }
-            "C"->{
+
+            "C" -> {
                 Text(
                     text = text,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.headlineLarge
                 )
             }
+
             else ->
                 Text(
                     text = text,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleLarge
                 )
         }
@@ -188,9 +247,15 @@ fun KeyButton(
 }
 
 fun validateInput(textState: TextFieldValue, newValue: String): Pair<String, Int> {
+    val newTextState: TextFieldValue =
+        if (textState.selection == TextRange(0, textState.text.length)) {
+            TextFieldValue("", selection = TextRange(0, 0))
+        } else {
+            textState
+        }
     val result: String
-    val stringBuilder: StringBuilder = StringBuilder(textState.text)
-    var newCursorPos: Int = textState.selection.start
+    val stringBuilder: StringBuilder = StringBuilder(newTextState.text)
+    var newCursorPos: Int = newTextState.selection.start
 
     when (newValue) {
         "X" -> {

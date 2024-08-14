@@ -15,10 +15,10 @@ class Interactor @Inject constructor(
     suspend fun updateActiveCurrencyList(newCurrenciesList: List<String>) =
         repository.updateActiveCurrencyList(newCurrenciesList)
 
-    suspend fun saveSelectedPositionAndValue(position: Int, value: String) =
-        repository.saveSelectedPositionAndValue(position, value)
+    suspend fun saveSelectedLastState(code: String, value: String) =
+        repository.saveSelectedLastState(code, value)
 
-    fun getSelectedPositionAndValue(): Pair<Int, String> = repository.getSelectedPositionAndValue()
+    fun getLastSelectedState(): Pair<String, String> = repository.getLastSelectedState()
     fun getRatesFromDatabase(): Flow<Map<String, Double>> {
         return repository.getRatesFromDatabase().map { currencyList ->
             currencyList.associate { currency ->

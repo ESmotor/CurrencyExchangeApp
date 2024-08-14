@@ -8,6 +8,7 @@ import com.itskidan.currencyexchangeapp.MainActivity
 import com.itskidan.currencyexchangeapp.di.modules.AppModule
 import com.itskidan.currencyexchangeapp.di.modules.DomainModule
 import com.itskidan.currencyexchangeapp.ui.addcurrency.AddCurrencyScreenViewModel
+import com.itskidan.currencyexchangeapp.ui.changecurreny.ChangeCurrencyScreenViewModel
 import com.itskidan.currencyexchangeapp.ui.home.HomeScreenViewModel
 import com.itskidan.remote_module.RemoteProvider
 import dagger.Component
@@ -24,5 +25,6 @@ interface AppComponent {
     fun inject(mainActivity: MainActivity)
     fun inject(homeScreenViewModel: HomeScreenViewModel)
     fun inject(addCurrencyScreenViewModel: AddCurrencyScreenViewModel)
+    fun inject(changeCurrencyScreenViewModel: ChangeCurrencyScreenViewModel)
 
 }

@@ -19,12 +19,11 @@ class AddCurrencyScreenViewModel : ViewModel() {
     private val currencyCodeList: List<String>
         get() = interactor.getCurrencyCodeList()
 
-    var activeCurrencyList: StateFlow<List<String>>
-
+    val activeCurrencyList: StateFlow<List<String>>
+        get() = interactor.getActiveCurrencyList()
 
     init {
         App.instance.dagger.inject(this)
-        activeCurrencyList = interactor.getActiveCurrencyList()
     }
 
     fun getCurrencyName(currencyCode: String): String {
