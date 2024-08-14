@@ -91,7 +91,6 @@ class MainRepository @Inject constructor(
     suspend fun updateDatabase(availableCurrencyCodeList: List<String>) {
         try {
             withContext(Dispatchers.IO) {
-                currencyDao.clearDatabase()
                 var updatedCurrencyRates: Map<String, Double?> = emptyMap()
                 val result = getRatesFromApi(availableCurrencyCodeList)
                 result.onSuccess { currencyBeacon ->
@@ -111,7 +110,6 @@ class MainRepository @Inject constructor(
 //    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
 //        try {
 //            withContext(Dispatchers.IO) {
-//                currencyDao.clearDatabase()
 //                val updatedCurrencyRates: Map<String, Double?> =
 //                    availableCurrencyCodeList.associateWith { (100..10000).random()/100.0 }
 //                val currencyList =
@@ -122,7 +120,6 @@ class MainRepository @Inject constructor(
 //            e.printStackTrace()
 //        }
 //    }
-
 
 
     private fun prepareCurrencyListForDB(
@@ -172,14 +169,14 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun saveSelectedPositionAndValue(position: Int, value: String) {
+    suspend fun saveSelectedLastState(code: String, value: String) {
         try {
             withContext(Dispatchers.IO) {
-                val newValue = if (value == "0." || value == "") "0" else value
+                val newValue = (value.toDoubleOrNull()?:0.0).toString()
                 sharedPreferences
                     .edit()
-                    .putInt(Constants.HOME_SCREEN_LIST_POSITION, position)
-                    .putString(Constants.HOME_SCREEN_POSITION_VALUE, newValue)
+                    .putString(Constants.HOME_SCREEN_LAST_STATE_CODE, code)
+                    .putString(Constants.HOME_SCREEN_LAST_STATE_VALUE, newValue)
                     .apply()
             }
         } catch (e: Exception) {
@@ -207,6 +204,11 @@ class MainRepository @Inject constructor(
             e.printStackTrace()
         }
     }
+    fun getLastSelectedState(): Pair<String, String> {
+        val code = sharedPreferences.getString(Constants.HOME_SCREEN_LAST_STATE_CODE, "USD") ?: "USD"
+        val value = sharedPreferences.getString(Constants.HOME_SCREEN_LAST_STATE_VALUE, "1") ?: "1"
+        return Pair(code, value)
+    }
 
     private fun getUpdateTimeCurrencyRates(): Long {
         Timber.tag("MyLog").d("method: getUpdateTimeCurrencyRates()")
@@ -216,11 +218,7 @@ class MainRepository @Inject constructor(
         )
     }
 
-    fun getSelectedPositionAndValue(): Pair<Int, String> {
-        val index = sharedPreferences.getInt(Constants.HOME_SCREEN_LIST_POSITION, 0)
-        val value = sharedPreferences.getString(Constants.HOME_SCREEN_POSITION_VALUE, "1") ?: "1"
-        return Pair(index, value)
-    }
+
 
     fun getCurrencyNamesMap(): Map<String, String> = resourceManager.getCurrencyNamesMap()
     fun getDefaultCurrencyName(): String = resourceManager.getDefaultCurrencyName()
