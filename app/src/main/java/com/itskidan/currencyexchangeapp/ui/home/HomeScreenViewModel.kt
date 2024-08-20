@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.itskidan.core_impl.Constants
+import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,11 @@ class HomeScreenViewModel : ViewModel() {
     }
 
     fun updateCurrentInput(code: String, value: String) {
-        currentInput = Pair(code, value.ifEmpty { "0.0" })
+        currentInput = Pair(code, value.ifEmpty { "0" })
+    }
+
+    fun getCurrentInput(): Pair<String, String> {
+        return currentInput
     }
 
     suspend fun updateActiveCurrencyRates() {
@@ -128,20 +132,18 @@ class HomeScreenViewModel : ViewModel() {
         val bigDecimal = BigDecimal(number)
         val isNegative = number < 0
         val absNumber = bigDecimal.abs()
-
-        return if (absNumber < BigDecimal.ONE) {
+        var result = if (absNumber < BigDecimal.ONE) {
             val strNumber = absNumber.toPlainString().drop(2)
             val zeroCount = strNumber.takeWhile { it == '0' }.length
             val scale = zeroCount + 2
-
-            var result = absNumber.setScale(scale, RoundingMode.HALF_UP).toPlainString()
-            if (result.endsWith(".00")) result = result.dropLast(3)
-            if (isNegative) "-$result" else result
+            absNumber.setScale(scale, RoundingMode.HALF_UP).toPlainString()
         } else {
-            var result = absNumber.setScale(2, RoundingMode.HALF_UP).toPlainString()
-            if (result.endsWith(".00")) result = result.dropLast(3)
-            if (isNegative) "-$result" else result
+            absNumber.setScale(2, RoundingMode.HALF_UP).toPlainString()
         }
+
+        if (result.endsWith(".00")) result = result.dropLast(3)
+
+        return if (isNegative) "-$result" else result
     }
 
 

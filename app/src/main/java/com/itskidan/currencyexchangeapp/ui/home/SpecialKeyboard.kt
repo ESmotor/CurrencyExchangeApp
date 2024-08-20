@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @Composable
 fun KeyboardForTyping(
@@ -54,10 +53,8 @@ fun KeyboardForTyping(
         listOf("Upd", "7", "8", "9"),
         listOf("Calc", ".", "0", "X")
     )
-    Timber.tag("MyLog").d("KeyboardForTyping: isChangeFocus:$isChangeFocus, TextState: $textState")
     LaunchedEffect(isChangeFocus) {
         onFocusChange(isChangeFocus)
-
     }
 
     Column(
@@ -97,7 +94,6 @@ fun KeyboardForTyping(
 
                                     else -> {
                                         scope.launch {
-                                            Timber.tag("MyLog").d("KeyButton: newText:$textState")
                                             val (newText, cursorPos) = validateInput(
                                                 textState = textState,
                                                 newValue = key,

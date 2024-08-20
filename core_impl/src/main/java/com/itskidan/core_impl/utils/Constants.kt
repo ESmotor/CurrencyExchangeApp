@@ -1,4 +1,4 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.utils
 
 
 object Constants {

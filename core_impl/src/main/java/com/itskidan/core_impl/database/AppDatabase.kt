@@ -1,4 +1,4 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

@@ -100,7 +100,6 @@ import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 
 @Composable
@@ -135,8 +134,6 @@ fun HomeScreen(
     // icons to mimic drawer destinations
     val items = viewModel.getIconsForDrawerMenu()
     val selectedItem = remember { mutableStateOf(items[0]) }
-
-    Timber.tag("MyLog").d("Home Screen")
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -288,8 +285,7 @@ fun HomeScreen(
                                 isUpdating = false
                             }
                         },
-                        onFocusChange = { index, code, value ->
-                            Timber.tag("MyLog").d("onFocusChange($index,$code,$value)")
+                        onFocusChange = { index, _, value ->
                             lastSelectedIndex = index
                             lastSelectedValue = value
                             textStateFromKeyboard.value =
@@ -297,8 +293,6 @@ fun HomeScreen(
                             isChangeFocus.value = true
                         },
                         onTextChange = { newTextState ->
-                            Timber.tag("MyLog")
-                                .d("onTextChange:${isChangeFocus.value}, $newTextState")
                             if (isChangeFocus.value) {
                                 val text = newTextState.text
                                 textStateFromKeyboard.value =
@@ -321,7 +315,6 @@ fun HomeScreen(
                         textState = textStateFromKeyboard.value,
                         isChangeFocus = isChangeFocus.value,
                         onTextChange = { newTextState ->
-                            Timber.tag("MyLog").d("onTextChangeFromKeyboard:${newTextState.text}")
                             isChangeFocus.value = false
                             textStateFromKeyboard.value = newTextState
                         },
@@ -340,7 +333,10 @@ fun HomeScreen(
                             }
                         },
                         onCalcLaunch = {
-                            Toast.makeText(context, "onCalcLaunch", Toast.LENGTH_SHORT).show()
+                            val (code, rate) = viewModel.getCurrentInput()
+                            navController.navigate(
+                                "${Constants.CALCULATOR}/$code/${rate.replace(".", ",")}"
+                            )
                         })
 
                 }
@@ -385,7 +381,6 @@ fun PullToRefreshLazyColumn(
 
     LaunchedEffect(activeCurrencyList, ratesFromDatabase) {
         if (activeCurrencyList.isNotEmpty() && ratesFromDatabase.isNotEmpty()) {
-            Timber.tag("MyLog").d("PullToRefreshLazyColumn: UpdateActiveListAndRates()")
             viewModel.updateActiveCurrencyRates()
         }
     }
@@ -403,7 +398,6 @@ fun PullToRefreshLazyColumn(
             ) {
             itemsIndexed(activeCurrencyList) { index, currencyCode ->
                 // Check if this item was the last selected one
-                Timber.tag("MyLog").d("PullToRefreshLazyColumn: index($index), currencyCode($currencyCode)")
                 if (calculatedRates.isNotEmpty()
                     && activeCurrencyList.isNotEmpty()
                     && ratesFromDatabase.isNotEmpty()
@@ -465,8 +459,6 @@ fun CurrencyListItem(
 ) {
     val focusRequester = remember { FocusRequester() }
     val itemHeight = 60.dp
-    Timber.tag("MyLog")
-        .d("CurrencyList,Position:$index, Code:$currencyCode,Rate:$rate, isFocused: $isInitiallyFocused,isChangeFocus: $isChangeFocus, TextState: $textStateFromKeyboard")
 
     LaunchedEffect(isInitiallyFocused) {
         if (isInitiallyFocused) {
@@ -500,8 +492,10 @@ fun CurrencyListItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(itemHeight)
-                .background(if (isInitiallyFocused) MaterialTheme.colorScheme.surfaceVariant
-                else MaterialTheme.colorScheme.surface),
+                .background(
+                    if (isInitiallyFocused) MaterialTheme.colorScheme.surfaceVariant
+                    else MaterialTheme.colorScheme.surface
+                ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -512,7 +506,6 @@ fun CurrencyListItem(
                     .weight(37f)
                     .clickable(
                         onClick = {
-                            Timber.tag("MyLog").d("isFocused ($isInitiallyFocused)")
                             navController.navigate("${Constants.CHANGE_CURRENCY}/$currencyCode/$rate/$isInitiallyFocused")
                         }
                     )

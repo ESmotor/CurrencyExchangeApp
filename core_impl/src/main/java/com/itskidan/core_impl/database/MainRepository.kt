@@ -1,12 +1,13 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.database
 
 import android.content.Context
 import android.content.SharedPreferences
 import com.itskidan.core_api.ResourceManager
 import com.itskidan.core_api.dao.CurrencyDao
 import com.itskidan.core_api.entity.Currency
-import com.itskidan.remote_module.CurrencyBeaconApi
-import com.itskidan.remote_module.entity.API
+import com.itskidan.core_impl.utils.Constants
+import com.itskidan.remote_module.api.CurrencyBeaconApi
+import com.itskidan.remote_module.api.API
 import com.itskidan.remote_module.entity.CurrencyBeacon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -172,11 +173,10 @@ class MainRepository @Inject constructor(
     suspend fun saveSelectedLastState(code: String, value: String) {
         try {
             withContext(Dispatchers.IO) {
-                val newValue = (value.toDoubleOrNull()?:0.0).toString()
                 sharedPreferences
                     .edit()
                     .putString(Constants.HOME_SCREEN_LAST_STATE_CODE, code)
-                    .putString(Constants.HOME_SCREEN_LAST_STATE_VALUE, newValue)
+                    .putString(Constants.HOME_SCREEN_LAST_STATE_VALUE, value)
                     .apply()
             }
         } catch (e: Exception) {

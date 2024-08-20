@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.itskidan.currencyexchangeapp.ui.addcurrency.AddCurrencyScreen
+import com.itskidan.currencyexchangeapp.ui.calculator.CalculatorScreen
 import com.itskidan.currencyexchangeapp.ui.changecurreny.ChangeCurrencyScreen
 import com.itskidan.currencyexchangeapp.utils.Constants
 import com.itskidan.currencyexchangeapp.ui.home.HomeScreen
@@ -29,6 +30,15 @@ fun NavGraph(navController: NavHostController) {
                 oldCurrencyCode = currencyCode,
                 oldCurrencyValue = currencyValue,
                 isFocused = isFocused
+            )
+        }
+        composable("${Constants.CALCULATOR}/{currencyCode}/{currencyValue}") { backStackEntry ->
+            val currencyCode = backStackEntry.arguments?.getString("currencyCode") ?: "USD"
+            val currencyValue = backStackEntry.arguments?.getString("currencyValue") ?: "0"
+            CalculatorScreen(
+                navController = navController,
+                currencyCode = currencyCode,
+                currencyValue = currencyValue
             )
         }
     }

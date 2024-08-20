@@ -1,12 +1,14 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.modules
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
 import com.itskidan.core_api.ResourceManager
-import com.itskidan.core_api.ResourceManagerProvider
+import com.itskidan.core_api.providers.ResourceManagerProvider
 import com.itskidan.core_api.dao.CurrencyDao
-import com.itskidan.remote_module.CurrencyBeaconApi
+import com.itskidan.core_impl.database.AppDatabase
+import com.itskidan.core_impl.database.MainRepository
+import com.itskidan.remote_module.api.CurrencyBeaconApi
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton

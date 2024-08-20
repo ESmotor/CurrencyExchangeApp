@@ -1,4 +1,4 @@
-package com.itskidan.remote_module
+package com.itskidan.remote_module.api
 
 import com.itskidan.remote_module.entity.CurrencyBeaconResultsDto
 import retrofit2.Response

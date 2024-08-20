@@ -4,14 +4,14 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import com.itskidan.core.CoreProvidersFactory
-import com.itskidan.core_impl.DaggerResourceManagerComponent
+import com.itskidan.core_impl.components.DaggerResourceManagerComponent
 import com.itskidan.currencyexchangeapp.BuildConfig
 import com.itskidan.currencyexchangeapp.di.AppComponent
 import com.itskidan.currencyexchangeapp.di.AppContextComponent
 import com.itskidan.currencyexchangeapp.di.DaggerAppComponent
 import com.itskidan.currencyexchangeapp.di.modules.DomainModule
 import com.itskidan.currencyexchangeapp.lifecycle.LifecycleObserver
-import com.itskidan.remote_module.DaggerRemoteComponent
+import com.itskidan.remote_module.components.DaggerRemoteComponent
 import timber.log.Timber
 
 class App : Application() {

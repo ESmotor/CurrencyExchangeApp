@@ -1,8 +1,9 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.modules
 
 import android.content.Context
 import com.itskidan.core_api.ResourceManager
-import com.itskidan.core_api.ResourceManagerProvider
+import com.itskidan.core_api.providers.ResourceManagerProvider
+import com.itskidan.core_impl.database.AppResourceManager
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton

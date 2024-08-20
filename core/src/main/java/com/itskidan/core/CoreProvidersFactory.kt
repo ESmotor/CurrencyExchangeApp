@@ -1,8 +1,8 @@
 package com.itskidan.core
 
-import com.itskidan.core_api.AppProvider
-import com.itskidan.core_api.DatabaseProvider
-import com.itskidan.core_impl.DaggerDatabaseComponent
+import com.itskidan.core_api.providers.AppProvider
+import com.itskidan.core_api.providers.DatabaseProvider
+import com.itskidan.core_impl.components.DaggerDatabaseComponent
 
 object CoreProvidersFactory {
     fun createDatabaseBuilder(
