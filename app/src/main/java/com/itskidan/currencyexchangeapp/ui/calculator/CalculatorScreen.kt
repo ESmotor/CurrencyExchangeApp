@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.currencyexchangeapp.R
+import com.itskidan.currencyexchangeapp.ui.googleadd.AdvertisingSpace
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -484,21 +485,6 @@ fun CalcKeyButton(
     }
 }
 
-@Composable
-fun AdvertisingSpace() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Advertising Space",
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.titleLarge
-        )
-    }
-}
 
 
 

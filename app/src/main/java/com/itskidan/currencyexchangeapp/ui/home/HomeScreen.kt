@@ -34,11 +34,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -85,6 +85,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalTextInputService
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextRange
@@ -95,6 +96,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.currencyexchangeapp.R
+import com.itskidan.currencyexchangeapp.ui.googleadd.AdvertisingSpace
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
@@ -131,26 +133,51 @@ fun HomeScreen(
     }
     // Drawer menu
     val drawerState = rememberDrawerState(DrawerValue.Closed)
-    // icons to mimic drawer destinations
     val items = viewModel.getIconsForDrawerMenu()
-    val selectedItem = remember { mutableStateOf(items[0]) }
+    val selectedItemDrawerMenu = remember { mutableStateOf(items[1]) }
+    // Dropdown Menu
+    val menuItems = listOf(
+        R.string.home_screen_overflow_menu_actual_exchange_rate_title to Icons.Default.CurrencyExchange,
+        R.string.home_screen_overflow_menu_total_balance_title to Icons.Default.MonetizationOn,
+        R.string.home_screen_overflow_menu_world_time_title to Icons.Default.AccessTime
+    )
+    var selectedItemDropdownMenu by remember { mutableIntStateOf(0) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    ) {
+
+                        Image(
+                            painter = painterResource(id = R.drawable.image_drawer_menu),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RectangleShape)
+                        )
+                    }
                     Spacer(Modifier.height(12.dp))
+
                     items.forEach { item ->
                         NavigationDrawerItem(
                             icon = { Icon(item, contentDescription = null) },
-                            label = { Text(item.name.substringAfterLast(".")) },
-                            selected = item == selectedItem.value,
+                            label = {
+                                Text(viewModel.getLabelNameForDrawerMenu(item, context))
+                            },
+                            selected = item == selectedItemDrawerMenu.value,
                             onClick = {
                                 scope.launch { drawerState.close() }
-                                selectedItem.value = item
+                                selectedItemDrawerMenu.value = item
                             },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
                     }
                 }
@@ -186,63 +213,48 @@ fun HomeScreen(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.home_screen_overflow_menu_actual_exchange_rate_title)) },
-                                onClick = {
-                                    scope.launch {
-                                        Toast.makeText(
-                                            context,
-                                            "Actual Exchange Rate",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                            menuItems.forEachIndexed { index, (titleRes, icon) ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(id = titleRes),
+                                            color = if (index == selectedItemDropdownMenu) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    },
+                                    onClick = {
+                                        selectedItemDropdownMenu = index
+                                        scope.launch {
+                                            Toast.makeText(
+                                                context,
+                                                "Valera $index",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        expanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = null,
+                                            tint = if (index == selectedItemDropdownMenu) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.CurrencyExchange,
-                                        contentDescription = null
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.home_screen_overflow_menu_private_exchange_rate_title)) },
-                                onClick = {
-                                    scope.launch {
-                                        Toast.makeText(
-                                            context,
-                                            "Private Exchange Rate",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Star,
-                                        contentDescription = null
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.home_screen_overflow_menu_world_time_title)) },
-                                onClick = {
-                                    scope.launch {
-                                        Toast.makeText(
-                                            context,
-                                            "World Time",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.AccessTime,
-                                        contentDescription = null
-                                    )
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 )
+            },
+
+            bottomBar = {
+                BottomAppBar {
+                    AdvertisingSpace()
+                }
+
             }
         ) { innerPadding ->
             Column(
@@ -339,20 +351,6 @@ fun HomeScreen(
                             )
                         })
 
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(10f)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Advertising Space",
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.titleLarge
-                    )
                 }
             }
         }
@@ -583,12 +581,10 @@ fun CurrencyListItem(
                             shape = MaterialTheme.shapes.small
                         )
                         .clip(RoundedCornerShape(LocalPaddingValues.current.small))
-
                         .background(MaterialTheme.colorScheme.surface)
-                        .weight(55f)
-
+                        .weight(63f)
                         .padding(
-                            horizontal = LocalPaddingValues.current.extraSmall,
+                            horizontal = LocalPaddingValues.current.small,
                             vertical = LocalPaddingValues.current.small
                         ),
                     contentAlignment = Alignment.BottomStart,
@@ -627,36 +623,6 @@ fun CurrencyListItem(
                             .focusRequester(focusRequester),
                     )
                 }
-            }
-            // This is icon for calculator
-            Box(
-                modifier = Modifier
-                    .weight(8f)
-                    .padding(horizontal = LocalPaddingValues.current.extraSmall)
-                    .clickable(
-                        onClick = {
-//                            scope.launch {
-//                                viewModel.saveSelectedLastState(
-//                                    code = currencyCode,
-//                                    value = textStateFromKeyboard.text
-//                                )
-//                                focusRequester.requestFocus()
-//                                isFocusedCalculator.value =
-//                                    !isFocusedCalculator.value
-//                            }
-                        }),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize(),
-
-                    tint = if (isInitiallyFocused) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface,
-                    imageVector = Icons.Default.Calculate,
-                    contentDescription = stringResource(R.string.home_screen_calculate_icon_description),
-                )
             }
         }
     }
