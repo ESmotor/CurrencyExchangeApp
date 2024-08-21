@@ -1,6 +1,6 @@
 package com.itskidan.currencyexchangeapp.domain
 
-import com.itskidan.core_impl.MainRepository
+import com.itskidan.core_impl.database.MainRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

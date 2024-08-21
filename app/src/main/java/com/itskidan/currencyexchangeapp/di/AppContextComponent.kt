@@ -2,7 +2,7 @@ package com.itskidan.currencyexchangeapp.di
 
 import android.app.Application
 import android.content.Context
-import com.itskidan.core_api.AppProvider
+import com.itskidan.core_api.providers.AppProvider
 import dagger.BindsInstance
 import dagger.Component
 import javax.inject.Singleton

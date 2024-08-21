@@ -3,8 +3,8 @@ package com.itskidan.remote_module.modules
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.itskidan.remote_module.BuildConfig
-import com.itskidan.remote_module.CurrencyBeaconApi
-import com.itskidan.remote_module.entity.ApiConstants
+import com.itskidan.remote_module.api.CurrencyBeaconApi
+import com.itskidan.remote_module.api.ApiConstants
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

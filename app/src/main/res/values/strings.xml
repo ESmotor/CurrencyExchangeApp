@@ -22,4 +22,7 @@
     <string name="united_arab_emirates_dirham">United Arab Emirates Dirham</string>
     <string name="australian_dollar">Australian Dollar</string>
     <string name="canadian_dollar">Canadian Dollar</string>
+
+<!--    Calculator Screen-->
+    <string name="calculator_screen_top_app_bar_title">Calculator</string>
 </resources>

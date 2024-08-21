@@ -1,7 +1,8 @@
-package com.itskidan.core_impl
+package com.itskidan.core_impl.database
 
 import android.content.Context
 import com.itskidan.core_api.ResourceManager
+import com.itskidan.core_impl.R
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader

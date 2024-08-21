@@ -1,6 +1,7 @@
 package com.itskidan.currencyexchangeapp
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.util.DisplayMetrics
 import androidx.activity.ComponentActivity
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
         App.instance.screenWidthInDp = getScreenWidthInDp(this)
         App.instance.screenHeightInDp = getScreenHeightInDp(this)
         Timber.tag("MyLog").d("ScreenSize: (W:${App.instance.screenWidthInDp},H:${App.instance.screenHeightInDp})")
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             //observer in the activity
             lifecycle.addObserver(App.instance.lifecycleObserver)

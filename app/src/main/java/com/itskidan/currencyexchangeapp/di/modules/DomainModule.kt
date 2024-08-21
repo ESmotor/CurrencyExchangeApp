@@ -1,6 +1,6 @@
 package com.itskidan.currencyexchangeapp.di.modules
 
-import com.itskidan.core_impl.MainRepository
+import com.itskidan.core_impl.database.MainRepository
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import dagger.Module
 import dagger.Provides

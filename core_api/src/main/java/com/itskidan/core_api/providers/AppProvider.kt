@@ -1,4 +1,4 @@
-package com.itskidan.core_api
+package com.itskidan.core_api.providers
 
 import android.content.Context
 

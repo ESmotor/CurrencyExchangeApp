@@ -120,8 +120,7 @@ fun ChangeCurrencyScreen(
                     )
                 },
             )
-        },
-
+        }
         ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
