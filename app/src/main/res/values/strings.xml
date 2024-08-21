@@ -5,7 +5,7 @@
     <string name="home_screen_navigation_menu_description">Navigation menu</string>
     <string name="home_screen_vertical_overflow_menu_description">Vertical overflow menu</string>
     <string name="home_screen_overflow_menu_actual_exchange_rate_title">Actual Exchange Rate</string>
-    <string name="home_screen_overflow_menu_private_exchange_rate_title">Private Exchange Rate</string>
+    <string name="home_screen_overflow_menu_total_balance_title">Total Balance</string>
     <string name="home_screen_overflow_menu_world_time_title">World Time</string>
     <string name="home_screen_calculate_icon_description">Open Calculator</string>
     <string name="home_screen_text_field_rate_placeholder">Enter numbers</string>
@@ -25,4 +25,15 @@
 
 <!--    Calculator Screen-->
     <string name="calculator_screen_top_app_bar_title">Calculator</string>
+
+<!--    DrawerMenu-->
+    <string name="drawer_menu_label_disable_advertising">Disable Advertising</string>
+    <string name="drawer_menu_label_actual_exchange_rate">Actual Exchange Rate</string>
+    <string name="drawer_menu_label_total_balance">Total Balance</string>
+    <string name="drawer_menu_label_world_time">World Time</string>
+    <string name="drawer_menu_label_send_feedback">Send Feedback</string>
+    <string name="drawer_menu_label_about_the_application">About the application</string>
+    <string name="drawer_menu_label_settings">Settings</string>
+    <string name="drawer_menu_label_more_options">More options</string>
+
 </resources>

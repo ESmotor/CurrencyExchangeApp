@@ -1,29 +1,20 @@
 package com.itskidan.currencyexchangeapp.ui.home
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Bookmarks
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.JoinFull
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Navigation
-import androidx.compose.material.icons.filled.Outbox
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itskidan.core_impl.utils.Constants
+import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.Dispatchers
@@ -107,25 +98,27 @@ class HomeScreenViewModel : ViewModel() {
 
     fun getIconsForDrawerMenu(): List<ImageVector> {
         return listOf(
-            Icons.Default.AccountCircle,
-            Icons.Default.Bookmarks,
-            Icons.Default.CalendarMonth,
-            Icons.Default.Dashboard,
-            Icons.Default.Email,
-            Icons.Default.Favorite,
-            Icons.Default.Group,
-            Icons.Default.Headphones,
-            Icons.Default.Image,
-            Icons.Default.JoinFull,
-            Icons.Default.Keyboard,
-            Icons.Default.Laptop,
-            Icons.Default.Map,
-            Icons.Default.Navigation,
-            Icons.Default.Outbox,
-            Icons.Default.PushPin,
-            Icons.Default.QrCode,
-            Icons.Default.Radio,
+            Icons.Default.Star,
+            Icons.Default.CurrencyExchange,
+            Icons.Default.MonetizationOn,
+            Icons.Default.AccessTime,
+            Icons.Default.Settings,
+            Icons.AutoMirrored.Filled.Message,
+            Icons.Default.Info,
         )
+    }
+
+    fun getLabelNameForDrawerMenu(item:ImageVector, context:Context):String{
+        return when (item.name.substringAfterLast(".")) {
+            "Star" -> context.getString(R.string.drawer_menu_label_disable_advertising)
+            "CurrencyExchange" -> context.getString(R.string.drawer_menu_label_actual_exchange_rate)
+            "MonetizationOn" -> context.getString(R.string.drawer_menu_label_total_balance)
+            "AccessTime" -> context.getString(R.string.drawer_menu_label_world_time)
+            "Message" -> context.getString(R.string.drawer_menu_label_send_feedback)
+            "Info" -> context.getString(R.string.drawer_menu_label_about_the_application)
+            "Settings" -> context.getString(R.string.drawer_menu_label_settings)
+            else -> context.getString(R.string.drawer_menu_label_more_options)
+        }
     }
 
     private fun formatDoubleToString(number: Double): String {
