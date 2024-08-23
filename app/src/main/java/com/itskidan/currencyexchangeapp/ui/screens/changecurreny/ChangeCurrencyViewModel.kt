@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.changecurreny
+package com.itskidan.currencyexchangeapp.ui.screens.changecurreny
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class ChangeCurrencyScreenViewModel : ViewModel() {
+class ChangeCurrencyViewModel : ViewModel() {
     @Inject
     lateinit var interactor: Interactor
 

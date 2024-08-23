@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.home
+package com.itskidan.currencyexchangeapp.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background

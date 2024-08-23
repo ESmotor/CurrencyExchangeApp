@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.itskidan.currencyexchangeapp.ui.addcurrency.AddCurrencyScreen
-import com.itskidan.currencyexchangeapp.ui.calculator.CalculatorScreen
-import com.itskidan.currencyexchangeapp.ui.changecurreny.ChangeCurrencyScreen
+import com.itskidan.currencyexchangeapp.ui.screens.addcurrency.AddCurrencyScreen
+import com.itskidan.currencyexchangeapp.ui.screens.calculator.CalculatorScreen
+import com.itskidan.currencyexchangeapp.ui.screens.changecurreny.ChangeCurrencyScreen
 import com.itskidan.currencyexchangeapp.utils.Constants
-import com.itskidan.currencyexchangeapp.ui.home.HomeScreen
+import com.itskidan.currencyexchangeapp.ui.screens.home.HomeScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
