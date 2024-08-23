@@ -1,11 +1,5 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+package com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates
 
-package com.itskidan.currencyexchangeapp.ui.home
-
-import android.app.Activity
-import android.content.Context
-import android.view.WindowManager
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,61 +9,38 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,10 +54,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalTextInputService
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -95,24 +63,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.itskidan.currencyexchangeapp.R
-import com.itskidan.currencyexchangeapp.ui.googleadd.AdvertisingSpace
+import com.itskidan.currencyexchangeapp.ui.components.KeyboardForTyping
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import com.itskidan.currencyexchangeapp.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
 @Composable
-fun HomeScreen(
+fun ActualExchangeRatesScreen(
+    innerPadding: PaddingValues,
     navController: NavHostController,
-    viewModel: HomeScreenViewModel = viewModel()
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    // Set a flag to prevent sleep mode
-    KeepScreenOn(context)
+    viewModel: ActualExchangeRatesViewModel = viewModel(),
+    scope: CoroutineScope,
+
+    ){
     var isRefreshing by remember { mutableStateOf(false) }
     var isUpdating by remember { mutableStateOf(false) }
     val isChangeFocus = remember { mutableStateOf(false) }
@@ -131,237 +96,117 @@ fun HomeScreen(
         viewModel.updateCurrentInput(code, value)
         viewModel.updateActiveCurrencyRates()
     }
-    // Drawer menu
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val items = viewModel.getIconsForDrawerMenu()
-    val selectedItemDrawerMenu = remember { mutableStateOf(items[1]) }
-    // Dropdown Menu
-    val menuItems = listOf(
-        R.string.home_screen_overflow_menu_actual_exchange_rate_title to Icons.Default.CurrencyExchange,
-        R.string.home_screen_overflow_menu_total_balance_title to Icons.Default.MonetizationOn,
-        R.string.home_screen_overflow_menu_world_time_title to Icons.Default.AccessTime
-    )
-    var selectedItemDropdownMenu by remember { mutableIntStateOf(0) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    ) {
-
-                        Image(
-                            painter = painterResource(id = R.drawable.image_drawer_menu),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RectangleShape)
-                        )
-                    }
-                    Spacer(Modifier.height(12.dp))
-
-                    items.forEach { item ->
-                        NavigationDrawerItem(
-                            icon = { Icon(item, contentDescription = null) },
-                            label = {
-                                Text(viewModel.getLabelNameForDrawerMenu(item, context))
-                            },
-                            selected = item == selectedItemDrawerMenu.value,
-                            onClick = {
-                                scope.launch { drawerState.close() }
-                                selectedItemDrawerMenu.value = item
-                            },
-                            modifier = Modifier
-                                .padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
-                    }
-                }
-            }
-        },
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(stringResource(R.string.home_screen_top_app_bar_title))
-                    },
-                    modifier = Modifier.statusBarsPadding(),
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(
-                                Icons.Default.Menu,
-                                contentDescription = stringResource(R.string.home_screen_navigation_menu_description)
-                            )
-                        }
-                    },
-                    actions = {
-                        var expanded by remember { mutableStateOf(false) }
-                        IconButton(onClick = { expanded = true }) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.home_screen_vertical_overflow_menu_description)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            menuItems.forEachIndexed { index, (titleRes, icon) ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = stringResource(id = titleRes),
-                                            color = if (index == selectedItemDropdownMenu) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else MaterialTheme.colorScheme.onSurface
-                                        )
-                                    },
-                                    onClick = {
-                                        selectedItemDropdownMenu = index
-                                        scope.launch {
-                                            Toast.makeText(
-                                                context,
-                                                "Valera $index",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        expanded = false
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = null,
-                                            tint = if (index == selectedItemDropdownMenu) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                )
-                            }
-                        }
+        Box(
+            modifier = Modifier
+                .weight(3f)
+                .fillMaxSize()
+                .zIndex(1f)
+        ) {
+            UpdateFieldForHomeScreen(
+                viewModel = viewModel,
+                isUpdating = isUpdating
+            )
+        }
+        Box(
+            modifier = Modifier
+                .weight(58f)
+                .fillMaxSize()
+                .zIndex(0f)
+        ) {
+            PullToRefreshLazyColumn(
+                scope = scope,
+                viewModel = viewModel,
+                lastSelectedIndex = lastSelectedIndex,
+                isRefreshing = isRefreshing,
+                isChangeFocus = isChangeFocus.value,
+                textStateFromKeyboard = textStateFromKeyboard.value,
+                navController = navController,
+                onRefresh = {
+                    scope.launch {
+                        isRefreshing = true
+                        isUpdating = true
+                        viewModel.updateDatabaseRates()
+                        delay(1000)
+                        isRefreshing = false
+                        isUpdating = false
                     }
-                )
-            },
-
-            bottomBar = {
-                BottomAppBar {
-                    AdvertisingSpace()
+                },
+                onFocusChange = { index, _, value ->
+                    lastSelectedIndex = index
+                    lastSelectedValue = value
+                    textStateFromKeyboard.value =
+                        TextFieldValue(value, TextRange(0, value.length))
+                    isChangeFocus.value = true
+                },
+                onTextChange = { newTextState ->
+                    if (isChangeFocus.value) {
+                        val text = newTextState.text
+                        textStateFromKeyboard.value =
+                            TextFieldValue(text, TextRange(0, text.length))
+                    } else {
+                        textStateFromKeyboard.value = newTextState
+                    }
                 }
+            )
 
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(3f)
-                        .fillMaxSize()
-                        .zIndex(1f)
-                ) {
-                    UpdateFieldForHomeScreen(
-                        viewModel = viewModel,
-                        isUpdating = isUpdating
+        }
+        Box(
+            modifier = Modifier
+                .weight(32f)
+                .fillMaxSize()
+                .zIndex(1f)
+        ) {
+            KeyboardForTyping(
+                scope = scope,
+                textState = textStateFromKeyboard.value,
+                isChangeFocus = isChangeFocus.value,
+                onTextChange = { newTextState ->
+                    isChangeFocus.value = false
+                    textStateFromKeyboard.value = newTextState
+                },
+                onFocusChange = { value ->
+                    if (value) isChangeFocus.value = false
+                },
+                onAddCurrencies = {
+                    navController.navigate(Constants.ADD_CURRENCY)
+                },
+                onUpdateRates = {
+                    scope.launch {
+                        isUpdating = true
+                        viewModel.updateDatabaseRates()
+                        delay(1000)
+                        isUpdating = false
+                    }
+                },
+                onCalcLaunch = {
+                    val (code, rate) = viewModel.getCurrentInput()
+                    navController.navigate(
+                        "${Constants.CALCULATOR}/$code/${rate.replace(".", ",")}"
                     )
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(58f)
-                        .fillMaxSize()
-                        .zIndex(0f)
-                ) {
-                    PullToRefreshLazyColumn(
-                        scope = scope,
-                        viewModel = viewModel,
-                        lastSelectedIndex = lastSelectedIndex,
-                        isRefreshing = isRefreshing,
-                        isChangeFocus = isChangeFocus.value,
-                        textStateFromKeyboard = textStateFromKeyboard.value,
-                        navController = navController,
-                        onRefresh = {
-                            scope.launch {
-                                isRefreshing = true
-                                isUpdating = true
-                                viewModel.updateDatabaseRates()
-                                delay(1000)
-                                isRefreshing = false
-                                isUpdating = false
-                            }
-                        },
-                        onFocusChange = { index, _, value ->
-                            lastSelectedIndex = index
-                            lastSelectedValue = value
-                            textStateFromKeyboard.value =
-                                TextFieldValue(value, TextRange(0, value.length))
-                            isChangeFocus.value = true
-                        },
-                        onTextChange = { newTextState ->
-                            if (isChangeFocus.value) {
-                                val text = newTextState.text
-                                textStateFromKeyboard.value =
-                                    TextFieldValue(text, TextRange(0, text.length))
-                            } else {
-                                textStateFromKeyboard.value = newTextState
-                            }
-                        }
-                    )
+                })
 
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(32f)
-                        .fillMaxSize()
-                        .zIndex(1f)
-                ) {
-                    KeyboardForTyping(
-                        scope = scope,
-                        textState = textStateFromKeyboard.value,
-                        isChangeFocus = isChangeFocus.value,
-                        onTextChange = { newTextState ->
-                            isChangeFocus.value = false
-                            textStateFromKeyboard.value = newTextState
-                        },
-                        onFocusChange = { value ->
-                            if (value) isChangeFocus.value = false
-                        },
-                        onAddCurrencies = {
-                            navController.navigate(Constants.ADD_CURRENCY)
-                        },
-                        onUpdateRates = {
-                            scope.launch {
-                                isUpdating = true
-                                viewModel.updateDatabaseRates()
-                                delay(1000)
-                                isUpdating = false
-                            }
-                        },
-                        onCalcLaunch = {
-                            val (code, rate) = viewModel.getCurrentInput()
-                            navController.navigate(
-                                "${Constants.CALCULATOR}/$code/${rate.replace(".", ",")}"
-                            )
-                        })
-
-                }
-            }
         }
     }
+
+
+
+
+
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PullToRefreshLazyColumn(
     scope: CoroutineScope,
-    viewModel: HomeScreenViewModel,
+    viewModel: ActualExchangeRatesViewModel,
     navController: NavHostController,
     lastSelectedIndex: Int,
     isRefreshing: Boolean,
@@ -443,7 +288,7 @@ fun PullToRefreshLazyColumn(
 
 @Composable
 fun CurrencyListItem(
-    viewModel: HomeScreenViewModel = viewModel(),
+    viewModel: ActualExchangeRatesViewModel = viewModel(),
     scope: CoroutineScope,
     navController: NavHostController,
     index: Int,
@@ -630,7 +475,7 @@ fun CurrencyListItem(
 
 @Composable
 fun UpdateFieldForHomeScreen(
-    viewModel: HomeScreenViewModel,
+    viewModel: ActualExchangeRatesViewModel,
     isUpdating: Boolean,
 ) {
     val lastUpdateTimeRates by viewModel.lastUpdateTimeRates.collectAsState(initial = 0L)
@@ -667,13 +512,3 @@ fun UpdateFieldForHomeScreen(
         }
     }
 }
-
-
-@Composable
-fun KeepScreenOn(context: Context) {
-    SideEffect {
-        val activity = context as? Activity
-        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    }
-}
-

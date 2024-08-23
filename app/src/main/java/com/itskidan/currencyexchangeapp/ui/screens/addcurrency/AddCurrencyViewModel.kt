@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.addcurrency
+package com.itskidan.currencyexchangeapp.ui.screens.addcurrency
 
 import androidx.lifecycle.ViewModel
 import com.itskidan.currencyexchangeapp.application.App
@@ -6,7 +6,7 @@ import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
-class AddCurrencyScreenViewModel : ViewModel() {
+class AddCurrencyViewModel : ViewModel() {
 
     @Inject
     lateinit var interactor: Interactor

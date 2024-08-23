@@ -1,20 +1,9 @@
-package com.itskidan.currencyexchangeapp.ui.home
+package com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates
 
-import android.content.Context
 import android.os.Build
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itskidan.core_impl.utils.Constants
-import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +22,7 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class HomeScreenViewModel : ViewModel() {
+class ActualExchangeRatesViewModel : ViewModel() {
     @Inject
     lateinit var interactor: Interactor
 
@@ -94,31 +83,6 @@ class HomeScreenViewModel : ViewModel() {
 
     fun getCurrencyFlag(currencyCode: String): Int {
         return currencyFlagsMap[currencyCode] ?: interactor.getDefaultCurrencyFlag()
-    }
-
-    fun getIconsForDrawerMenu(): List<ImageVector> {
-        return listOf(
-            Icons.Default.Star,
-            Icons.Default.CurrencyExchange,
-            Icons.Default.MonetizationOn,
-            Icons.Default.AccessTime,
-            Icons.Default.Settings,
-            Icons.AutoMirrored.Filled.Message,
-            Icons.Default.Info,
-        )
-    }
-
-    fun getLabelNameForDrawerMenu(item:ImageVector, context:Context):String{
-        return when (item.name.substringAfterLast(".")) {
-            "Star" -> context.getString(R.string.drawer_menu_label_disable_advertising)
-            "CurrencyExchange" -> context.getString(R.string.drawer_menu_label_actual_exchange_rate)
-            "MonetizationOn" -> context.getString(R.string.drawer_menu_label_total_balance)
-            "AccessTime" -> context.getString(R.string.drawer_menu_label_world_time)
-            "Message" -> context.getString(R.string.drawer_menu_label_send_feedback)
-            "Info" -> context.getString(R.string.drawer_menu_label_about_the_application)
-            "Settings" -> context.getString(R.string.drawer_menu_label_settings)
-            else -> context.getString(R.string.drawer_menu_label_more_options)
-        }
     }
 
     private fun formatDoubleToString(number: Double): String {
@@ -194,4 +158,3 @@ class HomeScreenViewModel : ViewModel() {
         Timber.tag("MyLog").d("method: updateDatabaseRates()")
     }
 }
-

@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.changecurreny
+package com.itskidan.currencyexchangeapp.ui.screens.changecurreny
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -59,7 +59,7 @@ import timber.log.Timber
 @Composable
 fun ChangeCurrencyScreen(
     navController: NavHostController,
-    viewModel: ChangeCurrencyScreenViewModel = viewModel(),
+    viewModel: ChangeCurrencyViewModel = viewModel(),
     isFocused: Boolean,
     oldCurrencyCode: String,
     oldCurrencyValue: String

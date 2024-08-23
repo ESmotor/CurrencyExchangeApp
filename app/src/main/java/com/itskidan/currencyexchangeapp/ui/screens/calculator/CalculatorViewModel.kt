@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.calculator
+package com.itskidan.currencyexchangeapp.ui.screens.calculator
 
 import androidx.lifecycle.ViewModel
 import com.itskidan.currencyexchangeapp.application.App
@@ -7,7 +7,7 @@ import timber.log.Timber
 import java.math.BigDecimal
 import javax.inject.Inject
 
-class CalculatorScreenViewModel : ViewModel() {
+class CalculatorViewModel : ViewModel() {
     @Inject
     lateinit var interactor: Interactor
 

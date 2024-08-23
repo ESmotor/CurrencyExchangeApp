@@ -1,4 +1,4 @@
-package com.itskidan.currencyexchangeapp.ui.addcurrency
+package com.itskidan.currencyexchangeapp.ui.screens.addcurrency
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -71,7 +71,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun AddCurrencyScreen(
     navController: NavHostController,
-    viewModel: AddCurrencyScreenViewModel = viewModel()
+    viewModel: AddCurrencyViewModel = viewModel()
 ) {
     val screenWidthInDp = App.instance.screenWidthInDp
     val scope = rememberCoroutineScope()

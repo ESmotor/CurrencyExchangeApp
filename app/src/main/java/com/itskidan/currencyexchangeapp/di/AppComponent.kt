@@ -7,10 +7,10 @@ import com.itskidan.core_impl.database.MainRepository
 import com.itskidan.currencyexchangeapp.MainActivity
 import com.itskidan.currencyexchangeapp.di.modules.AppModule
 import com.itskidan.currencyexchangeapp.di.modules.DomainModule
-import com.itskidan.currencyexchangeapp.ui.addcurrency.AddCurrencyScreenViewModel
-import com.itskidan.currencyexchangeapp.ui.calculator.CalculatorScreenViewModel
-import com.itskidan.currencyexchangeapp.ui.changecurreny.ChangeCurrencyScreenViewModel
-import com.itskidan.currencyexchangeapp.ui.home.HomeScreenViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.addcurrency.AddCurrencyViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.calculator.CalculatorViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.changecurreny.ChangeCurrencyViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates.ActualExchangeRatesViewModel
 import com.itskidan.remote_module.providers.RemoteProvider
 import dagger.Component
 import javax.inject.Singleton
@@ -24,9 +24,9 @@ interface AppComponent {
 
     fun inject(mainRepository: MainRepository)
     fun inject(mainActivity: MainActivity)
-    fun inject(homeScreenViewModel: HomeScreenViewModel)
-    fun inject(addCurrencyScreenViewModel: AddCurrencyScreenViewModel)
-    fun inject(changeCurrencyScreenViewModel: ChangeCurrencyScreenViewModel)
-    fun inject(calculatorScreenViewModel: CalculatorScreenViewModel)
+    fun inject(addCurrencyViewModel: AddCurrencyViewModel)
+    fun inject(changeCurrencyViewModel: ChangeCurrencyViewModel)
+    fun inject(calculatorViewModel: CalculatorViewModel)
+    fun inject(actualExchangeRatesViewModel: ActualExchangeRatesViewModel)
 
 }

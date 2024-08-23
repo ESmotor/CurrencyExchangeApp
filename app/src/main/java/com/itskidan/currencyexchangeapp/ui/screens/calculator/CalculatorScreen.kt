@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
-package com.itskidan.currencyexchangeapp.ui.calculator
+package com.itskidan.currencyexchangeapp.ui.screens.calculator
 
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.currencyexchangeapp.R
-import com.itskidan.currencyexchangeapp.ui.googleadd.AdvertisingSpace
+import com.itskidan.currencyexchangeapp.ui.components.AdvertisingSpace
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -60,7 +60,7 @@ import timber.log.Timber
 @Composable
 fun CalculatorScreen(
     navController: NavHostController,
-    viewModel: CalculatorScreenViewModel = viewModel(),
+    viewModel: CalculatorViewModel = viewModel(),
     currencyCode: String,
     currencyValue: String
 ) {
@@ -253,7 +253,7 @@ fun CalcText(
 @Composable
 fun CalculatorKeyboard(
     scope: CoroutineScope,
-    viewModel: CalculatorScreenViewModel,
+    viewModel: CalculatorViewModel,
     isAvailableToDone: Boolean,
     textState: String,
     onInputTextChange: (String) -> Unit,
