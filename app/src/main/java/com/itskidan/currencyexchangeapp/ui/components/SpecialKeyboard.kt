@@ -32,12 +32,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Composable
 fun KeyboardForTyping(
-    scope: CoroutineScope,
     textState: TextFieldValue,
     isChangeFocus: Boolean,
     onTextChange: (TextFieldValue) -> Unit,
@@ -93,27 +90,9 @@ fun KeyboardForTyping(
                                     }
 
                                     else -> {
-                                        scope.launch {
-                                            val (newText, cursorPos) = validateInput(
-                                                textState = textState,
-                                                newValue = key,
-                                            )
-                                            onTextChange(
-                                                TextFieldValue(
-                                                    text = newText,
-                                                    selection = TextRange(cursorPos)
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            onLongClick = {
-                                if (key == "X") {
-                                    scope.launch {
                                         val (newText, cursorPos) = validateInput(
                                             textState = textState,
-                                            newValue = "C",
+                                            newValue = key,
                                         )
                                         onTextChange(
                                             TextFieldValue(
@@ -122,6 +101,20 @@ fun KeyboardForTyping(
                                             )
                                         )
                                     }
+                                }
+                            },
+                            onLongClick = {
+                                if (key == "X") {
+                                    val (newText, cursorPos) = validateInput(
+                                        textState = textState,
+                                        newValue = "C",
+                                    )
+                                    onTextChange(
+                                        TextFieldValue(
+                                            text = newText,
+                                            selection = TextRange(cursorPos)
+                                        )
+                                    )
                                 }
                             })
                     }

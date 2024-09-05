@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.itskidan.core_api.ResourceManager
 import com.itskidan.core_api.dao.CurrencyDao
 import com.itskidan.core_api.entity.Currency
+import com.itskidan.core_api.entity.TotalBalanceCurrency
 import com.itskidan.core_impl.utils.Constants
 import com.itskidan.remote_module.api.CurrencyBeaconApi
 import com.itskidan.remote_module.api.API
@@ -13,8 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,20 +38,23 @@ class MainRepository @Inject constructor(
 
     val availableCurrencyCodeList: List<String>
 
+    private val _totalAmountCurrency = MutableStateFlow("USD")
+    val totalAmountCurrency: MutableStateFlow<String> get() = _totalAmountCurrency
 
     init {
         availableCurrencyCodeList = getCurrencyCodeList()
-        _activeCurrencyList.value = getActiveCurrencyList()
+        _activeCurrencyList.value = getActualRatesCurrencyList()
         _lastUpdateTimeRates.value = getUpdateTimeCurrencyRates()
+        _totalAmountCurrency.value = getSelectedTotalBalanceCurrency()
     }
 
     // Methods for working with  Active Currency List
-    private suspend fun saveActiveCurrencyList() {
+    private suspend fun saveActiveCurrencyList(newCurrencyList: List<String>, screen: String) {
         try {
             withContext(Dispatchers.IO) {
-                val activeCurrencyString = _activeCurrencyList.value.joinToString(",")
+                val activeCurrencyString = newCurrencyList.joinToString(",")
                 sharedPreferences.edit()
-                    .putString(Constants.HOME_SCREEN_ACTIVE_CURRENCIES, activeCurrencyString)
+                    .putString(screen, activeCurrencyString)
                     .apply()
             }
         } catch (e: Exception) {
@@ -56,25 +62,61 @@ class MainRepository @Inject constructor(
         }
     }
 
-    private fun getActiveCurrencyList(): List<String> {
+    private fun getActualRatesCurrencyList(): List<String> {
         return try {
-            val defaultValue = Constants.DEFAULT_VALUE_FOR_ACTIVE_CURRENCIES
+            val defaultValue = Constants.DEFAULT_VALUE_FOR_ACTUAL_RATES_CURRENCIES_LIST
             val activeCurrencyString = sharedPreferences.getString(
-                Constants.HOME_SCREEN_ACTIVE_CURRENCIES,
+                Constants.ACTUAL_RATES_ACTIVE_CURRENCIES_LIST,
                 defaultValue
             ) ?: defaultValue
             parseCurrencyString(activeCurrencyString)
         } catch (e: Exception) {
             e.printStackTrace()
-            parseCurrencyString(Constants.DEFAULT_VALUE_FOR_ACTIVE_CURRENCIES)
+            parseCurrencyString(Constants.DEFAULT_VALUE_FOR_ACTUAL_RATES_CURRENCIES_LIST)
         }
     }
 
-    suspend fun updateActiveCurrencyList(newCurrenciesList: List<String>) {
-        _activeCurrencyList.value = newCurrenciesList
+    fun getTotalBalanceCurrencyList(): Flow<List<TotalBalanceCurrency>> {
+        return currencyDao.getCachedTotalBalanceCurrency()
+    }
+
+    suspend fun updateActiveCurrencyList(newCurrenciesList: List<String>, screen: String) {
+        when (screen) {
+            Constants.ACTUAL_RATES_ACTIVE_CURRENCIES_LIST -> {
+                _activeCurrencyList.value = newCurrenciesList
+            }
+
+            Constants.TOTAL_BALANCE_ACTIVE_CURRENCIES_LIST -> {
+                Timber.tag("MyLog").d("newCurrenciesList: $newCurrenciesList")
+                if (newCurrenciesList.isEmpty()) {
+                    currencyDao.clearTotalBalanceDB()
+                } else {
+                    val existingCurrencyMap = currencyDao.getCachedTotalBalanceCurrency().first()
+                        .associateBy { it.currencyCode }
+                        .toMutableMap()
+                    val newCurrencySet = newCurrenciesList.toSet()
+                    val currenciesToDelete = existingCurrencyMap.keys - newCurrencySet
+                    if (currenciesToDelete.isNotEmpty()) {
+                        currencyDao.deleteCurrenciesByCodes(currenciesToDelete.toList())
+                        existingCurrencyMap.keys.removeAll(currenciesToDelete)
+                    }
+
+                    newCurrenciesList.forEachIndexed { index, code ->
+                        val currency = existingCurrencyMap[code]
+                        if (currency != null) {
+                            currency.id = index
+                        } else {
+                            existingCurrencyMap[code] = TotalBalanceCurrency(index, code, 0.0)
+                        }
+                    }
+                    currencyDao.insertOrUpdateCurrenciesList(existingCurrencyMap.values.toList())
+                }
+            }
+        }
+
         try {
             withContext(Dispatchers.IO) {
-                saveActiveCurrencyList()
+                saveActiveCurrencyList(newCurrenciesList, screen)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -89,7 +131,7 @@ class MainRepository @Inject constructor(
 
     // Methods for working with a database
 
-    suspend fun updateDatabase(availableCurrencyCodeList: List<String>) {
+    private suspend fun updateDatabaseRatesFromApi() {
         try {
             withContext(Dispatchers.IO) {
                 var updatedCurrencyRates: Map<String, Double?> = emptyMap()
@@ -101,13 +143,16 @@ class MainRepository @Inject constructor(
                 }
                 val currencyList =
                     prepareCurrencyListForDB(availableCurrencyCodeList, updatedCurrencyRates)
-                currencyDao.insertAll(currencyList)
+                currencyDao.insertListCurrencyRatesToDB(currencyList)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    suspend fun updateTotalBalanceCurrency(currency: TotalBalanceCurrency) {
+        currencyDao.updateTotalBalanceCurrency(currency)
+    }
 //    suspend fun manualUpdateDatabase(availableCurrencyCodeList: List<String>) {
 //        try {
 //            withContext(Dispatchers.IO) {
@@ -134,7 +179,7 @@ class MainRepository @Inject constructor(
     }
 
     fun getRatesFromDatabase(): Flow<List<Currency>> {
-        return currencyDao.getCachedCurrencyFromDB()
+        return currencyDao.getCachedCurrencyRatesFromDB()
     }
 
 
@@ -175,8 +220,8 @@ class MainRepository @Inject constructor(
             withContext(Dispatchers.IO) {
                 sharedPreferences
                     .edit()
-                    .putString(Constants.HOME_SCREEN_LAST_STATE_CODE, code)
-                    .putString(Constants.HOME_SCREEN_LAST_STATE_VALUE, value)
+                    .putString(Constants.ACTUAL_RATES_LAST_STATE_CODE, code)
+                    .putString(Constants.ACTUAL_RATES_LAST_STATE_VALUE, value)
                     .apply()
             }
         } catch (e: Exception) {
@@ -185,7 +230,7 @@ class MainRepository @Inject constructor(
 
     }
 
-    suspend fun saveUpdateTimeCurrencyRates() {
+    private suspend fun saveUpdateTimeCurrencyRates() {
         try {
             withContext(Dispatchers.IO) {
                 Timber.tag("MyLog").d("method: saveUpdateTimeCurrencyRates()")
@@ -193,7 +238,7 @@ class MainRepository @Inject constructor(
                 sharedPreferences
                     .edit()
                     .putLong(
-                        Constants.HOME_SCREEN_LAST_UPDATE_TIME,
+                        Constants.LAST_UPDATE_TIME,
                         updateTime
                     )
                     .apply()
@@ -204,26 +249,100 @@ class MainRepository @Inject constructor(
             e.printStackTrace()
         }
     }
+
+
     fun getLastSelectedState(): Pair<String, String> {
-        val code = sharedPreferences.getString(Constants.HOME_SCREEN_LAST_STATE_CODE, "USD") ?: "USD"
-        val value = sharedPreferences.getString(Constants.HOME_SCREEN_LAST_STATE_VALUE, "1") ?: "1"
+        val code =
+            sharedPreferences.getString(Constants.ACTUAL_RATES_LAST_STATE_CODE, "USD") ?: "USD"
+        val value = sharedPreferences.getString(Constants.ACTUAL_RATES_LAST_STATE_VALUE, "1") ?: "1"
         return Pair(code, value)
     }
+
 
     private fun getUpdateTimeCurrencyRates(): Long {
         Timber.tag("MyLog").d("method: getUpdateTimeCurrencyRates()")
         return sharedPreferences.getLong(
-            Constants.HOME_SCREEN_LAST_UPDATE_TIME,
+            Constants.LAST_UPDATE_TIME,
             System.currentTimeMillis()
         )
     }
-
-
 
     fun getCurrencyNamesMap(): Map<String, String> = resourceManager.getCurrencyNamesMap()
     fun getDefaultCurrencyName(): String = resourceManager.getDefaultCurrencyName()
     fun getCurrencyFlagsMap(): Map<String, Int> = resourceManager.getCurrencyFlagsMap()
     fun getDefaultCurrencyFlag(): Int = resourceManager.getDefaultCurrencyFlag()
     private fun getCurrencyCodeList(): List<String> = resourceManager.getCurrencyCodes()
+    suspend fun saveSelectedTotalBalanceCurrency(code: String) {
+        try {
+            withContext(Dispatchers.IO) {
+                sharedPreferences
+                    .edit()
+                    .putString(Constants.TOTAL_BALANCE_SELECTED_CURRENCY, code)
+                    .apply()
+            }
+            _totalAmountCurrency.value = code
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
+    private fun getSelectedTotalBalanceCurrency(): String {
+        val code =
+            sharedPreferences.getString(Constants.TOTAL_BALANCE_SELECTED_CURRENCY, "USD") ?: "USD"
+        return code
+    }
+
+    suspend fun updateTotalBalanceCurrencyByCode(code: String, value: Double) {
+        currencyDao.updateTotalBalanceCurrencyByCode(code, value)
+    }
+
+    suspend fun updateTotalBalanceCurrencyList(oldCurrencyCode: String, newCurrencyCode: String) {
+        val currencyMap = getTotalBalanceCurrencyList().first().associateBy { it.currencyCode }.toMutableMap()
+
+        if (newCurrencyCode == oldCurrencyCode) return
+
+        val oldCurrency = currencyMap[oldCurrencyCode]
+        val newCurrency = currencyMap[newCurrencyCode]
+
+        when {
+            newCurrency != null && oldCurrency != null -> {
+                // Swap IDs between the two currencies
+                val tempId = oldCurrency.id
+                oldCurrency.id = newCurrency.id
+                newCurrency.id = tempId
+                currencyDao.updateTotalBalanceCurrencyList(listOf(oldCurrency, newCurrency))
+            }
+            oldCurrency != null -> {
+                // Update the old currency with the new code and insert it
+                currencyDao.deleteCurrencyFromTotalBalanceDB(oldCurrencyCode)
+                val updatedCurrency = oldCurrency.copy(currencyCode = newCurrencyCode)
+                currencyDao.insertOrUpdateCurrency(updatedCurrency)
+            }
+        }
+    }
+
+    suspend fun updateDatabase(){
+        if (isDatabaseUpdateTime(Constants.MIN_TIME_FOR_UPDATE_DATABASE)) {
+            updateDatabaseRatesFromApi()
+            saveUpdateTimeCurrencyRates()
+            Timber.tag("MyLog").d("method: updateDatabaseRatesFromApi()")
+        } else{
+            val currentTime = System.currentTimeMillis()
+            val lastUpdateTime = _lastUpdateTimeRates.value
+            val result = currentTime - lastUpdateTime > TimeUnit.MINUTES.toMillis(5L)
+            if(result){
+                _lastUpdateTimeRates.value = currentTime
+                Timber.tag("MyLog").d("method: NotUpdateDatabaseRatesFromApi(onlyTime)")
+            }
+        }
+    }
+
+    private fun isDatabaseUpdateTime(minutes: Long): Boolean {
+        val currentTime = System.currentTimeMillis()
+        val lastUpdateTime = getUpdateTimeCurrencyRates()
+        val result = currentTime - lastUpdateTime > TimeUnit.MINUTES.toMillis(minutes)
+        return result
+    }
 
 }

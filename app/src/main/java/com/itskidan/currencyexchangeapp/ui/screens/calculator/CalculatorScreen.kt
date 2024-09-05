@@ -50,10 +50,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.ui.components.AdvertisingSpace
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -62,8 +64,10 @@ fun CalculatorScreen(
     navController: NavHostController,
     viewModel: CalculatorViewModel = viewModel(),
     currencyCode: String,
-    currencyValue: String
+    currencyValue: String,
+    locationOfRequest: String,
 ) {
+    Timber.tag("MyLog").d("locationOfRequest:$locationOfRequest, code: $currencyCode, value: $currencyValue")
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -72,7 +76,6 @@ fun CalculatorScreen(
     val isDivideByZero = remember { mutableStateOf(false) }
     val isAvailableToDone = remember { mutableStateOf(true) }
 
-    Timber.tag("MyLog").d("code: $currencyCode, value: $currencyValue")
 
     Scaffold(
         topBar = {
@@ -145,13 +148,28 @@ fun CalculatorScreen(
                     },
                     onEqualOrDoneClick = {
                         if (isAvailableToDone.value) {
-                            scope.launch {
-                                viewModel.saveSelectedLastState(
-                                    code = currencyCode,
-                                    value = textStateFromKeyboard.value.replace(",", ".")
-                                )
-                                navController.popBackStack()
+                            when (locationOfRequest){
+                                Constants.ACTUAL_RATES_KEYBOARD_TO_CALCULATOR->{
+                                    scope.launch {
+                                        viewModel.saveSelectedLastState(
+                                            code = currencyCode,
+                                            value = textStateFromKeyboard.value.replace(",", ".")
+                                        )
+                                        navController.popBackStack()
+                                    }
+                                }
+                                Constants.TOTAL_BALANCE_KEYBOARD_TO_CALCULATOR->{
+                                    scope.launch {
+                                        viewModel.updateTotalBalanceCurrencyByCode(
+                                            code = currencyCode,
+                                            value = textStateFromKeyboard.value.replace(",", ".")
+                                        )
+                                        navController.popBackStack()
+                                    }
+                                }
                             }
+
+
 
                         } else {
                             if (isDivideByZero.value) {

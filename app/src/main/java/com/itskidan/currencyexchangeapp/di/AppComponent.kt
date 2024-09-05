@@ -11,6 +11,7 @@ import com.itskidan.currencyexchangeapp.ui.screens.addcurrency.AddCurrencyViewMo
 import com.itskidan.currencyexchangeapp.ui.screens.calculator.CalculatorViewModel
 import com.itskidan.currencyexchangeapp.ui.screens.changecurreny.ChangeCurrencyViewModel
 import com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates.ActualExchangeRatesViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.totalbalance.TotalBalanceViewModel
 import com.itskidan.remote_module.providers.RemoteProvider
 import dagger.Component
 import javax.inject.Singleton
@@ -28,5 +29,6 @@ interface AppComponent {
     fun inject(changeCurrencyViewModel: ChangeCurrencyViewModel)
     fun inject(calculatorViewModel: CalculatorViewModel)
     fun inject(actualExchangeRatesViewModel: ActualExchangeRatesViewModel)
+    fun inject(totalBalanceViewModel: TotalBalanceViewModel)
 
 }

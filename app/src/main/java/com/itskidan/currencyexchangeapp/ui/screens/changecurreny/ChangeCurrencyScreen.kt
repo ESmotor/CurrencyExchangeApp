@@ -1,14 +1,11 @@
 package com.itskidan.currencyexchangeapp.ui.screens.changecurreny
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
@@ -40,17 +36,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.itskidan.currencyexchangeapp.ui.components.CurrencyCodeAndName
+import com.itskidan.currencyexchangeapp.ui.components.CurrencyFlag
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -62,10 +56,10 @@ fun ChangeCurrencyScreen(
     viewModel: ChangeCurrencyViewModel = viewModel(),
     isFocused: Boolean,
     oldCurrencyCode: String,
-    oldCurrencyValue: String
+    oldCurrencyValue: String,
+    locationOfRequest: String,
 ) {
-    Timber.tag("MyLog")
-        .d("ChangeCurrencyScreen: oldCurrencyCode($oldCurrencyCode), oldCurrencyValue($oldCurrencyValue),isFocused($isFocused)")
+    Timber.tag("MyLog").d("fromScreen:$locationOfRequest")
     val scope = rememberCoroutineScope()
 
     var currenciesList by remember { mutableStateOf(listOf<String>()) }
@@ -121,7 +115,7 @@ fun ChangeCurrencyScreen(
                 },
             )
         }
-        ) { innerPadding ->
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -131,100 +125,71 @@ fun ChangeCurrencyScreen(
 
             // Passive currency
             items(searchingCurrenciesList) { newCurrencyCode ->
-                Card(
-                    shape = RectangleShape,
-                    onClick = {
+                ChangeCurrencyCard(
+                    currencyCode = newCurrencyCode,
+                    currencyFlag = viewModel.getCurrencyFlag(newCurrencyCode),
+                    currencyName = viewModel.getCurrencyName(newCurrencyCode),
+                    onCardClick = {
                         scope.launch {
-                            Timber.tag("MyLog").d("OnCurrencyClick")
-                            if (isFocused) {
-                                viewModel.saveSelectedLastState(newCurrencyCode, oldCurrencyValue)
-                            }
-                            viewModel.updateActiveCurrencyList(oldCurrencyCode, newCurrencyCode)
+                            viewModel.onCurrencyClick(
+                                isFocused = isFocused,
+                                oldCurrencyCode = oldCurrencyCode,
+                                newCurrencyCode = newCurrencyCode,
+                                oldCurrencyValue = oldCurrencyValue,
+                                locationOfRequest = locationOfRequest
+                            )
                             navController.popBackStack()
                         }
-                    },
-                    modifier = Modifier
-                        .height(60.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple(color = Color.Gray),
-                            onClick = {}
-                        ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                ) {
-                    Row(
-                        Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Flag
-                        Box(
-                            modifier = Modifier
-                                .padding(
-                                    vertical = LocalPaddingValues.current.extraSmall,
-                                    horizontal = LocalPaddingValues.current.small
-                                )
-                                .aspectRatio(1f)
-                                .clip(CircleShape)
-                                .border(
-                                    2.dp,
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Image(
-                                painter = painterResource(
-                                    id = viewModel.getCurrencyFlag(newCurrencyCode)
-                                ),
-                                contentDescription = "Currency Flag Country",
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                                alignment = Alignment.Center,
-                            )
-                        }
-
-                        // Code and name of currency
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = LocalPaddingValues.current.medium),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Column {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = newCurrencyCode,
-                                        textAlign = TextAlign.Start,
-                                        style = MaterialTheme.typography.titleLarge
-
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = viewModel.getCurrencyName(newCurrencyCode),
-                                        textAlign = TextAlign.Start,
-                                        style = MaterialTheme.typography.titleMedium
-
-                                    )
-                                }
-                            }
-                        }
                     }
-                }
+                )
             }
+        }
+    }
+}
+@Composable
+fun ChangeCurrencyCard(
+    currencyCode: String,
+    currencyFlag: Int,
+    currencyName: String,
+    onCardClick: () -> Unit
+) {
+    Card(
+        shape = RectangleShape,
+        modifier = Modifier
+            .height(70.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(color = Color.Gray),
+                onClick = onCardClick
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(LocalPaddingValues.current.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Flag
+            CurrencyFlag(
+                currencyFlag = currencyFlag,
+                modifier = Modifier.align(Alignment.CenterVertically),
+                size = 50.dp,
+                borderSize = 2.dp,
+                borderColor = MaterialTheme.colorScheme.primaryContainer,
+            )
+
+            // Code and name of currency
+            CurrencyCodeAndName(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                currencyCode = currencyCode,
+                currencyCodeStyle = MaterialTheme.typography.titleLarge,
+                currencyCodeColor = MaterialTheme.colorScheme.onSurface,
+                currencyName = currencyName,
+                currencyNameStyle = MaterialTheme.typography.titleMedium,
+                currencyNameColor = MaterialTheme.colorScheme.onSurface
+            )
+            // Spacer to push the button to the right
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
