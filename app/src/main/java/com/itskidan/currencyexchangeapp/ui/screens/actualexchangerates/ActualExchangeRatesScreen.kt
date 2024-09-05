@@ -1,40 +1,20 @@
 package com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,44 +24,44 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalTextInputService
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.itskidan.core.Utils.TimeUtils
+import com.itskidan.core_impl.utils.Constants
+import com.itskidan.currencyexchangeapp.ui.components.CurrencyCard
 import com.itskidan.currencyexchangeapp.ui.components.KeyboardForTyping
+import com.itskidan.currencyexchangeapp.ui.components.UpdateBox
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
-import com.itskidan.currencyexchangeapp.utils.Constants
+import com.itskidan.currencyexchangeapp.utils.NavigationConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun ActualExchangeRatesScreen(
+    viewModel: ActualExchangeRatesViewModel = viewModel(),
     innerPadding: PaddingValues,
     navController: NavHostController,
-    viewModel: ActualExchangeRatesViewModel = viewModel(),
     scope: CoroutineScope,
-
-    ){
+) {
     var isRefreshing by remember { mutableStateOf(false) }
     var isUpdating by remember { mutableStateOf(false) }
     val isChangeFocus = remember { mutableStateOf(false) }
     val textStateFromKeyboard = remember { mutableStateOf(TextFieldValue("")) }
+
+    //Checking for last update time
+    val lastUpdateTimeRates by viewModel.lastUpdateTimeRates.collectAsState(initial = 0L)
+    var updateTime by remember { mutableStateOf("") }
+
+    LaunchedEffect(lastUpdateTimeRates) {
+        if (lastUpdateTimeRates > 0L) {
+            updateTime = TimeUtils.getFormattedCurrentTime(lastUpdateTimeRates)
+        }
+    }
 
     // Initialize state
     var lastSelectedIndex by remember { mutableIntStateOf(-1) }
@@ -107,10 +87,12 @@ fun ActualExchangeRatesScreen(
                 .weight(3f)
                 .fillMaxSize()
                 .zIndex(1f)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
         ) {
-            UpdateFieldForHomeScreen(
-                viewModel = viewModel,
-                isUpdating = isUpdating
+            UpdateBox(
+                isUpdating = isUpdating,
+                updateTime = updateTime
             )
         }
         Box(
@@ -120,13 +102,11 @@ fun ActualExchangeRatesScreen(
                 .zIndex(0f)
         ) {
             PullToRefreshLazyColumn(
-                scope = scope,
                 viewModel = viewModel,
                 lastSelectedIndex = lastSelectedIndex,
                 isRefreshing = isRefreshing,
                 isChangeFocus = isChangeFocus.value,
                 textStateFromKeyboard = textStateFromKeyboard.value,
-                navController = navController,
                 onRefresh = {
                     scope.launch {
                         isRefreshing = true
@@ -137,9 +117,10 @@ fun ActualExchangeRatesScreen(
                         isUpdating = false
                     }
                 },
-                onFocusChange = { index, _, value ->
+                onFocusChange = { index, code, value ->
                     lastSelectedIndex = index
                     lastSelectedValue = value
+                    viewModel.updateCurrentInput(code, value)
                     textStateFromKeyboard.value =
                         TextFieldValue(value, TextRange(0, value.length))
                     isChangeFocus.value = true
@@ -152,6 +133,17 @@ fun ActualExchangeRatesScreen(
                     } else {
                         textStateFromKeyboard.value = newTextState
                     }
+                },
+                onChangeCurrency = { code, value, isFocused ->
+                    val currencyCode = code.ifEmpty { "USD" }
+                    val currencyValue = value.ifEmpty { "0" }
+                    navController.navigate(
+                        "${NavigationConstants.CHANGE_CURRENCY}/" +
+                                "$currencyCode/" +
+                                "$currencyValue/" +
+                                "$isFocused/" +
+                                Constants.ACTUAL_RATES_LIST_TO_CHANGE_CURRENCY
+                    )
                 }
             )
 
@@ -163,7 +155,6 @@ fun ActualExchangeRatesScreen(
                 .zIndex(1f)
         ) {
             KeyboardForTyping(
-                scope = scope,
                 textState = textStateFromKeyboard.value,
                 isChangeFocus = isChangeFocus.value,
                 onTextChange = { newTextState ->
@@ -174,7 +165,10 @@ fun ActualExchangeRatesScreen(
                     if (value) isChangeFocus.value = false
                 },
                 onAddCurrencies = {
-                    navController.navigate(Constants.ADD_CURRENCY)
+                    navController.navigate(
+                        "${NavigationConstants.ADD_CURRENCY}/" +
+                                Constants.ACTUAL_RATES_KEYBOARD_TO_ADD_CURRENCY
+                    )
                 },
                 onUpdateRates = {
                     scope.launch {
@@ -187,7 +181,10 @@ fun ActualExchangeRatesScreen(
                 onCalcLaunch = {
                     val (code, rate) = viewModel.getCurrentInput()
                     navController.navigate(
-                        "${Constants.CALCULATOR}/$code/${rate.replace(".", ",")}"
+                        "${NavigationConstants.CALCULATOR}/" +
+                                "$code/" +
+                                "${rate.replace(".", ",")}/" +
+                                Constants.ACTUAL_RATES_KEYBOARD_TO_CALCULATOR
                     )
                 })
 
@@ -195,19 +192,13 @@ fun ActualExchangeRatesScreen(
     }
 
 
-
-
-
 }
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PullToRefreshLazyColumn(
-    scope: CoroutineScope,
     viewModel: ActualExchangeRatesViewModel,
-    navController: NavHostController,
     lastSelectedIndex: Int,
     isRefreshing: Boolean,
     isChangeFocus: Boolean,
@@ -215,7 +206,8 @@ fun PullToRefreshLazyColumn(
     textStateFromKeyboard: TextFieldValue,
     onRefresh: () -> Unit,
     onFocusChange: (Int, String, String) -> Unit,
-    onTextChange: (TextFieldValue) -> Unit
+    onTextChange: (TextFieldValue) -> Unit,
+    onChangeCurrency: (String, String, Boolean) -> Unit
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val calculatedRates by viewModel.activeCurrencyRates.collectAsState(emptyMap())
@@ -241,25 +233,42 @@ fun PullToRefreshLazyColumn(
             ) {
             itemsIndexed(activeCurrencyList) { index, currencyCode ->
                 // Check if this item was the last selected one
-                if (calculatedRates.isNotEmpty()
-                    && activeCurrencyList.isNotEmpty()
-                    && ratesFromDatabase.isNotEmpty()
-                ) {
-                    val isLastSelected = index == lastSelectedIndex
-                    CurrencyListItem(
-                        viewModel = viewModel,
-                        scope = scope,
-                        navController = navController,
-                        index = index,
-                        isChangeFocus = isChangeFocus,
-                        currencyCode = currencyCode,
-                        rate = calculatedRates[currencyCode] ?: "0",
-                        isInitiallyFocused = isLastSelected,
-                        textStateFromKeyboard = textStateFromKeyboard,
-                        onFocusChange = onFocusChange,
-                        onTextChange = onTextChange
-                    )
+                val isInitiallyFocused = index == lastSelectedIndex
+                val rate = calculatedRates[currencyCode] ?: "0"
+                val textFieldValue = when {
+                    isInitiallyFocused && isChangeFocus -> {
+                        TextFieldValue(
+                            text = textStateFromKeyboard.text,
+                            selection = TextRange(0, textStateFromKeyboard.text.length)
+                        )
+                    }
+
+                    isInitiallyFocused -> textStateFromKeyboard
+                    else -> TextFieldValue(rate)
                 }
+
+                LaunchedEffect(textStateFromKeyboard) {
+                    if (isInitiallyFocused) {
+                        val value = textStateFromKeyboard.text
+                        viewModel.updateCurrentInput(currencyCode, value)
+                        viewModel.saveSelectedLastState(currencyCode, value)
+                        if (!isChangeFocus) {
+                            viewModel.updateActiveCurrencyRates()
+                        }
+                    }
+                }
+
+                CurrencyCard(
+                    currencyCode = currencyCode,
+                    currencyFlag = viewModel.getCurrencyFlag(currencyCode),
+                    isFocused = isInitiallyFocused,
+                    textFieldValue = textFieldValue,
+                    onFocusChange = { onFocusChange(index, currencyCode, textFieldValue.text) },
+                    onTextChange = onTextChange,
+                    onChangeCurrency = { code,value,isFocused->
+                        onChangeCurrency(code, value, isFocused)
+                    }
+                )
             }
         }
 
@@ -282,233 +291,5 @@ fun PullToRefreshLazyColumn(
             modifier = Modifier
                 .align(Alignment.TopCenter),
         )
-    }
-}
-
-
-@Composable
-fun CurrencyListItem(
-    viewModel: ActualExchangeRatesViewModel = viewModel(),
-    scope: CoroutineScope,
-    navController: NavHostController,
-    index: Int,
-    isChangeFocus: Boolean,
-    currencyCode: String,
-    rate: String,
-    isInitiallyFocused: Boolean,
-    textStateFromKeyboard: TextFieldValue,
-    onFocusChange: (Int, String, String) -> Unit,
-    onTextChange: (TextFieldValue) -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    val itemHeight = 60.dp
-
-    LaunchedEffect(isInitiallyFocused) {
-        if (isInitiallyFocused) {
-            focusRequester.requestFocus()
-        }
-    }
-
-    LaunchedEffect(textStateFromKeyboard) {
-        if (isInitiallyFocused) {
-            val value = textStateFromKeyboard.text
-            viewModel.updateCurrentInput(currencyCode, value)
-            viewModel.saveSelectedLastState(currencyCode, textStateFromKeyboard.text)
-            if (!isChangeFocus) {
-                viewModel.updateActiveCurrencyRates()
-            }
-        }
-    }
-
-    Card(
-        shape = RectangleShape,
-        onClick = {
-            scope.launch { }
-        },
-        modifier = Modifier
-            .height(itemHeight),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(itemHeight)
-                .background(
-                    if (isInitiallyFocused) MaterialTheme.colorScheme.surfaceVariant
-                    else MaterialTheme.colorScheme.surface
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-
-            //  Flag and Name of currency and change Icon
-            Box(
-                modifier = Modifier
-                    .weight(37f)
-                    .clickable(
-                        onClick = {
-                            navController.navigate("${Constants.CHANGE_CURRENCY}/$currencyCode/$rate/$isInitiallyFocused")
-                        }
-                    )
-                    .padding(start = LocalPaddingValues.current.extraSmall),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .clip(CircleShape)
-                            .weight(35f)
-                            .border(
-                                2.dp,
-                                MaterialTheme.colorScheme.primaryContainer,
-                                CircleShape
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            imageVector = ImageVector.vectorResource(
-                                viewModel.getCurrencyFlag(currencyCode)
-                            ),
-                            contentDescription = "Currency Flag Country",
-                            contentScale = ContentScale.Crop,
-                            alignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                        )
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(45f)
-                    ) {
-                        Text(
-                            text = currencyCode,
-                            textAlign = TextAlign.Center,
-                            color = if (isInitiallyFocused) MaterialTheme.colorScheme.onSurfaceVariant
-                            else MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleLarge
-
-                        )
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(20f)
-
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .fillMaxSize(),
-                            imageVector = Icons.Default.ArrowDropDown,
-                            tint = if (isInitiallyFocused) MaterialTheme.colorScheme.onSurfaceVariant
-                            else MaterialTheme.colorScheme.onSurface,
-                            contentDescription = "Triangle list icon",
-                        )
-                    }
-                }
-
-
-            }
-            // This is edit text for write amount
-            CompositionLocalProvider(
-                LocalTextInputService provides null
-            ) {
-                Box(
-                    modifier = Modifier
-                        .shadow(
-                            elevation = LocalPaddingValues.current.extraSmall,
-                            shape = MaterialTheme.shapes.small
-                        )
-                        .clip(RoundedCornerShape(LocalPaddingValues.current.small))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .weight(63f)
-                        .padding(
-                            horizontal = LocalPaddingValues.current.small,
-                            vertical = LocalPaddingValues.current.small
-                        ),
-                    contentAlignment = Alignment.BottomStart,
-                ) {
-                    BasicTextField(
-                        value = if (isInitiallyFocused) {
-                            if (isChangeFocus) {
-                                val value = textStateFromKeyboard.text
-                                TextFieldValue(
-                                    text = value,
-                                    selection = TextRange(start = 0, end = value.length)
-                                )
-                            } else {
-                                textStateFromKeyboard
-                            }
-
-
-                        } else {
-                            TextFieldValue(rate)
-                        },
-                        onValueChange = onTextChange,
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        textStyle = LocalTextStyle.current.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.End,
-                        ) + MaterialTheme.typography.titleLarge,
-                        singleLine = true,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onFocusChanged { focusState ->
-                                if (focusState.isFocused) {
-                                    onFocusChange(index, currencyCode, rate)
-                                }
-                            }
-                            .focusRequester(focusRequester),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UpdateFieldForHomeScreen(
-    viewModel: ActualExchangeRatesViewModel,
-    isUpdating: Boolean,
-) {
-    val lastUpdateTimeRates by viewModel.lastUpdateTimeRates.collectAsState(initial = 0L)
-    var updateTime by remember { mutableStateOf("") }
-
-    LaunchedEffect(lastUpdateTimeRates) {
-        if (lastUpdateTimeRates > 0L) {
-            updateTime = viewModel.getFormattedCurrentTime(lastUpdateTimeRates)
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
-    ) {
-
-        if (isUpdating) {
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxSize(),
-                color = MaterialTheme.colorScheme.primary
-            )
-        } else {
-            if (updateTime.isNotEmpty()) {
-                Text(
-                    text = "Updated: $updateTime",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
     }
 }

@@ -2,12 +2,14 @@ package com.itskidan.currencyexchangeapp.ui.screens.changecurreny
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 class ChangeCurrencyViewModel : ViewModel() {
@@ -50,12 +52,20 @@ class ChangeCurrencyViewModel : ViewModel() {
                     || getCurrencyName(currencyCode).contains(searchText, ignoreCase = true)
         }
     }
-    fun saveSelectedLastState(code: String, value: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            interactor.saveSelectedLastState(code, value)
-        }
+
+    private suspend fun saveSelectedLastState(code: String, value: String) {
+        interactor.saveSelectedLastState(code, value)
     }
-    suspend fun updateActiveCurrencyList(oldCurrencyCode: String, newCurrencyCode: String) {
+
+    private suspend fun saveSelectedTotalBalanceCurrency(code: String) {
+        interactor.saveSelectedTotalBalanceCurrency(code)
+    }
+
+    private suspend fun updateActiveCurrencyList(
+        oldCurrencyCode: String,
+        newCurrencyCode: String,
+        screen: String
+    ) {
         val existActiveCurrencyList = activeCurrencyList.first().toMutableList()
         val indexOld = existActiveCurrencyList.indexOf(oldCurrencyCode)
         if (oldCurrencyCode != newCurrencyCode) {
@@ -68,6 +78,41 @@ class ChangeCurrencyViewModel : ViewModel() {
                 existActiveCurrencyList[indexOld] = newCurrencyCode
             }
         }
-        interactor.updateActiveCurrencyList(existActiveCurrencyList)
+        interactor.updateActiveCurrencyList(existActiveCurrencyList, screen)
     }
+
+    suspend fun onCurrencyClick(
+        isFocused: Boolean,
+        oldCurrencyCode: String,
+        newCurrencyCode: String,
+        oldCurrencyValue: String,
+        locationOfRequest: String,
+    ) {
+        when (locationOfRequest) {
+            Constants.ACTUAL_RATES_LIST_TO_CHANGE_CURRENCY -> {
+                if (isFocused) {
+                    saveSelectedLastState(newCurrencyCode, oldCurrencyValue)
+                }
+                updateActiveCurrencyList(
+                    oldCurrencyCode = oldCurrencyCode,
+                    newCurrencyCode = newCurrencyCode,
+                    screen = Constants.ACTUAL_RATES_ACTIVE_CURRENCIES_LIST
+                )
+            }
+
+            Constants.TOTAL_BALANCE_LIST_TO_CHANGE_CURRENCY -> {
+                Timber.tag("MyLog").d("TOTAL_BALANCE")
+                interactor.updateTotalBalanceCurrencyList(oldCurrencyCode,newCurrencyCode)
+            }
+
+            Constants.TOTAL_BALANCE_SELECTED_TO_CHANGE_CURRENCY -> {
+                Timber.tag("MyLog").d("TOTAL_BALANCE_ACTIVE")
+                saveSelectedTotalBalanceCurrency(newCurrencyCode)
+            }
+
+        }
+
+
+    }
+
 }

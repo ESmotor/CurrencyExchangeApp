@@ -1,9 +1,7 @@
 package com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates
 
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +13,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class ActualExchangeRatesViewModel : ViewModel() {
@@ -32,12 +25,13 @@ class ActualExchangeRatesViewModel : ViewModel() {
         get() = interactor.getCurrencyFlagsMap()
     val ratesFromDatabase: Flow<Map<String, Double>>
         get() = interactor.getRatesFromDatabase()
-    val lastUpdateTimeRates: StateFlow<Long>
-        get() = interactor.getLastUpdateCurrencyRates()
+
+     val lastUpdateTimeRates : StateFlow<Long>
+     get() = interactor.getLastUpdateCurrencyRates()
+
 
     private var currentInput = Pair("", "")
-    private val currencyCodeList: List<String>
-        get() = interactor.getCurrencyCodeList()
+
 
     private val _activeCurrencyRates = MutableStateFlow<Map<String, String>>(emptyMap())
     val activeCurrencyRates: MutableStateFlow<Map<String, String>> get() = _activeCurrencyRates
@@ -50,6 +44,7 @@ class ActualExchangeRatesViewModel : ViewModel() {
     }
 
     fun updateCurrentInput(code: String, value: String) {
+        Timber.tag("MyLog").d("updateCurrentInput: $code, value: $value)")
         currentInput = Pair(code, value.ifEmpty { "0" })
     }
 
@@ -122,39 +117,7 @@ class ActualExchangeRatesViewModel : ViewModel() {
         }
     }
 
-    fun getFormattedCurrentTime(timeMillis: Long): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val instant = java.time.Instant.ofEpochMilli(timeMillis)
-            val localDateTime =
-                java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
-            val formatter = java.time.format.DateTimeFormatter.ofPattern(
-                "HH:mm, MMM d, yyyy",
-                Locale.getDefault()
-            )
-            localDateTime.format(formatter)
-        } else {
-            val date = Date(timeMillis)
-            val simpleDateFormat = SimpleDateFormat("HH:mm, MMM d, yyyy", Locale.getDefault())
-            simpleDateFormat.timeZone = TimeZone.getDefault()
-            simpleDateFormat.format(date)
-        }
-    }
-
-    private fun isDatabaseUpdateTime(): Boolean {
-        val currentTime = System.currentTimeMillis()
-        val lastUpdateTime = lastUpdateTimeRates.value
-        val result =
-            currentTime - lastUpdateTime > TimeUnit.MINUTES.toMillis(Constants.MIN_TIME_FOR_UPDATE_DATABASE)
-        return result
-    }
-
-    suspend fun updateDatabaseRates(codeList: List<String> = currencyCodeList) {
-        if (isDatabaseUpdateTime()) {
-            interactor.updateDatabase(codeList)
-            interactor.saveUpdateTimeCurrencyRates()
-        }
-//        interactor.updateDatabase(codeList)
-//        interactor.saveUpdateTimeCurrencyRates()
-        Timber.tag("MyLog").d("method: updateDatabaseRates()")
+        suspend fun updateDatabaseRates() {
+            interactor.updateDatabase()
     }
 }

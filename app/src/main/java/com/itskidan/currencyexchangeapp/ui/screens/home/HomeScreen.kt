@@ -5,7 +5,6 @@ package com.itskidan.currencyexchangeapp.ui.screens.home
 import android.app.Activity
 import android.content.Context
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +44,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,14 +77,13 @@ fun HomeScreen(
     // Drawer menu
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val items = viewModel.getIconsForDrawerMenu()
-    val selectedItemDrawerMenu = remember { mutableStateOf(items[1]) }
+    val selectedItemDrawerMenu = rememberSaveable { mutableIntStateOf(1) }
     // Dropdown Menu
     val menuItems = listOf(
         R.string.home_screen_overflow_menu_actual_exchange_rate_title to Icons.Default.CurrencyExchange,
         R.string.home_screen_overflow_menu_total_balance_title to Icons.Default.MonetizationOn,
-        R.string.home_screen_overflow_menu_world_time_title to Icons.Default.AccessTime
     )
-    var selectedItemDropdownMenu by remember { mutableIntStateOf(0) }
+    var selectedItemDropdownMenu by rememberSaveable { mutableIntStateOf(0) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -114,12 +113,13 @@ fun HomeScreen(
                             label = {
                                 Text(viewModel.getLabelNameForDrawerMenu(item, context))
                             },
-                            selected = item == selectedItemDrawerMenu.value,
+                            selected = item == items[selectedItemDrawerMenu.intValue],
                             onClick = {
                                 scope.launch {
                                     drawerState.close()
                                 }
-                                selectedItemDrawerMenu.value = item
+                                selectedItemDrawerMenu.intValue = items.indexOf(item)
+                                selectedItemDropdownMenu = selectedItemDrawerMenu.intValue - 1
                             },
                             modifier = Modifier
                                 .padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -170,13 +170,7 @@ fun HomeScreen(
                                     },
                                     onClick = {
                                         selectedItemDropdownMenu = index
-                                        scope.launch {
-                                            Toast.makeText(
-                                                context,
-                                                "Valera $index",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
+                                        selectedItemDrawerMenu.intValue = index + 1
                                         expanded = false
                                     },
                                     leadingIcon = {
@@ -202,8 +196,9 @@ fun HomeScreen(
 
             }
         ) { innerPadding ->
-            when (selectedItemDrawerMenu.value) {
+            when (items[selectedItemDrawerMenu.intValue]) {
                 Icons.Default.CurrencyExchange -> {
+                    selectedItemDropdownMenu = 0
                     ActualExchangeRatesScreen(
                         innerPadding = innerPadding,
                         navController = navController,
@@ -212,8 +207,14 @@ fun HomeScreen(
                 }
 
                 Icons.Default.MonetizationOn -> {
-                    TotalBalanceScreen(innerPadding = innerPadding)
+                    selectedItemDropdownMenu = 1
+                    TotalBalanceScreen(
+                        innerPadding = innerPadding,
+                        navController = navController,
+                        scope = scope
+                    )
                 }
+
                 Icons.Default.AccessTime -> {
                     WorldTime(innerPadding = innerPadding)
                 }
