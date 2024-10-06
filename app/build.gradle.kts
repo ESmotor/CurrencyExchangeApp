@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.gms.google.services)
 //    id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     id ("kotlin-kapt")
@@ -70,6 +71,7 @@ dependencies {
     implementation(libs.androidx.ui.text.google.fonts)
     implementation (libs.androidx.material)
     implementation (libs.androidx.material.icons.extended)
+    implementation(libs.androidx.window)
     // Compose
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -77,6 +79,13 @@ dependencies {
     // Coroutines
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    //Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.firestore)
+
+    //GoogleServices
+    implementation(libs.play.services.ads)
     // LifeCycle
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

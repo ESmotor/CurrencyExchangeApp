@@ -23,4 +23,12 @@ object Constants {
     const val TOTAL_BALANCE_KEYBOARD_TO_CALCULATOR = "total_balance_keyboard_to_calculator"
     const val TOTAL_BALANCE_LIST_TO_CHANGE_CURRENCY = "total_balance_list_to_change_currency"
     const val TOTAL_BALANCE_SELECTED_TO_CHANGE_CURRENCY = "total_balance_selected_to_change_currency"
+    const val DRAWER_MENU_TO_ABOUT_APP = "drawer_menu_to_about_app"
+    const val DRAWER_MENU_TO_SETTINGS = "drawer_menu_to_settings"
+    const val DRAWER_MENU_TO_SEND_FEEDBACK = "drawer_menu_to_send_feedback"
+    const val DRAWER_MENU_TO_DISABLE_AD = "drawer_menu_to_disable_ad"
+
+    //GoogleAdd
+    const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/9214589741"
+    const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 }

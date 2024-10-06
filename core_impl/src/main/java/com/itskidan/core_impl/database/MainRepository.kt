@@ -7,8 +7,8 @@ import com.itskidan.core_api.dao.CurrencyDao
 import com.itskidan.core_api.entity.Currency
 import com.itskidan.core_api.entity.TotalBalanceCurrency
 import com.itskidan.core_impl.utils.Constants
-import com.itskidan.remote_module.api.CurrencyBeaconApi
 import com.itskidan.remote_module.api.API
+import com.itskidan.remote_module.api.CurrencyBeaconApi
 import com.itskidan.remote_module.entity.CurrencyBeacon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +35,9 @@ class MainRepository @Inject constructor(
 
     private val _lastUpdateTimeRates = MutableStateFlow(0L)
     val lastUpdateTimeRates: StateFlow<Long> get() = _lastUpdateTimeRates
+
+    private val _currentVersionApp = MutableStateFlow("1.0.1")
+    val currentVersionApp: StateFlow<String> get() = _currentVersionApp
 
     val availableCurrencyCodeList: List<String>
 
@@ -298,7 +301,8 @@ class MainRepository @Inject constructor(
     }
 
     suspend fun updateTotalBalanceCurrencyList(oldCurrencyCode: String, newCurrencyCode: String) {
-        val currencyMap = getTotalBalanceCurrencyList().first().associateBy { it.currencyCode }.toMutableMap()
+        val currencyMap =
+            getTotalBalanceCurrencyList().first().associateBy { it.currencyCode }.toMutableMap()
 
         if (newCurrencyCode == oldCurrencyCode) return
 
@@ -313,6 +317,7 @@ class MainRepository @Inject constructor(
                 newCurrency.id = tempId
                 currencyDao.updateTotalBalanceCurrencyList(listOf(oldCurrency, newCurrency))
             }
+
             oldCurrency != null -> {
                 // Update the old currency with the new code and insert it
                 currencyDao.deleteCurrencyFromTotalBalanceDB(oldCurrencyCode)
@@ -322,16 +327,18 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun updateDatabase(){
-        if (isDatabaseUpdateTime(Constants.MIN_TIME_FOR_UPDATE_DATABASE)) {
+    suspend fun updateDatabase() {
+        val currencyRateUSD = currencyDao.getCurrencyRateByCode("USD")
+        val isDatabaseReady = !(currencyRateUSD == null || currencyRateUSD == 0.0)
+        if (isDatabaseUpdateTime(Constants.MIN_TIME_FOR_UPDATE_DATABASE) || !isDatabaseReady) {
             updateDatabaseRatesFromApi()
             saveUpdateTimeCurrencyRates()
             Timber.tag("MyLog").d("method: updateDatabaseRatesFromApi()")
-        } else{
+        } else {
             val currentTime = System.currentTimeMillis()
             val lastUpdateTime = _lastUpdateTimeRates.value
             val result = currentTime - lastUpdateTime > TimeUnit.MINUTES.toMillis(5L)
-            if(result){
+            if (result) {
                 _lastUpdateTimeRates.value = currentTime
                 Timber.tag("MyLog").d("method: NotUpdateDatabaseRatesFromApi(onlyTime)")
             }

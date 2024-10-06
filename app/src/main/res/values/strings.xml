@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">CurrencyExchangeApp</string>
-<!--    Home Screen-->
-    <string name="home_screen_top_app_bar_title">CurrencyExchange</string>
+    <string name="app_name">Currency Master</string>
+    <!--    Home Screen-->
+    <string name="home_screen_top_app_bar_title">Currency Master</string>
     <string name="home_screen_navigation_menu_description">Navigation menu</string>
     <string name="home_screen_vertical_overflow_menu_description">Vertical overflow menu</string>
     <string name="home_screen_overflow_menu_actual_exchange_rate_title">Actual Exchange Rate</string>
@@ -23,10 +23,34 @@
     <string name="australian_dollar">Australian Dollar</string>
     <string name="canadian_dollar">Canadian Dollar</string>
 
-<!--    Calculator Screen-->
+    <!--    Actual Currency Exchange Rates Screen-->
+    <string name="actual_currency_exchange_rate_screen_database_is_empty">The currency exchange rate database is empty. Please check your internet connection and update the currency database.</string>
+
+    <!--    Add Currency Screen-->
+    <string name="add_currency_screen_minimum_number_of_currencies">Minimum number of currencies</string>
+
+    <!--    Calculator Screen-->
     <string name="calculator_screen_top_app_bar_title">Calculator</string>
 
-<!--    DrawerMenu-->
+    <!--    AboutApp Screen-->
+    <string name="about_app_screen_top_app_bar_title">Notification</string>
+    <string name="about_app_screen_title">Notification</string>
+    <string name="about_app_screen_description">
+        In this application you can find out the current exchange rates and calculate the final balance in the currency you need. Please note that the exchange rates presented in the application are for informational purposes only and may differ from the official bank rates. Exchange rates may change at any time without prior notice.\n\n
+        Rates are updated only if there is an Internet connection. If there is no connection, previously saved data is used, which may differ from the current rates.\n\n
+        The developer is not responsible for any possible losses associated with the use of this application.
+    </string>
+    <string name="about_app_screen_version">Version:</string>
+    <string name="about_app_screen_update">Update:</string>
+
+    <!--    Settings Screen-->
+    <string name="settings_screen_top_app_bar_title">Settings</string>
+    <string name="settings_screen_actual_rates_currencies">Actual rates currencies</string>
+    <string name="settings_screen_total_balance_currencies">Total balance currencies</string>
+    <string name="settings_screen_home_currency_for_total_balance">Home currency for the total balance</string>
+    <string name="settings_screen_no_one_currency_selected">No one currency selected</string>
+
+    <!--    DrawerMenu-->
     <string name="drawer_menu_label_disable_advertising">Disable Advertising</string>
     <string name="drawer_menu_label_actual_exchange_rate">Actual Exchange Rate</string>
     <string name="drawer_menu_label_total_balance">Total Balance</string>
@@ -35,5 +59,35 @@
     <string name="drawer_menu_label_about_the_application">About the application</string>
     <string name="drawer_menu_label_settings">Settings</string>
     <string name="drawer_menu_label_more_options">More options</string>
+
+    <!--    SendFeedBack Screen-->
+    <string name="send_feedback_screen_top_app_bar_title">Send Feedback</string>
+    <string name="feedback_screen_i_have_a_problem">I have a problem</string>
+    <string name="feedback_screen_i_have_an_idea">I have an idea</string>
+    <string name="feedback_screen_i_like_your_application">I like your application</string>
+    <string name="feedback_screen_btn_continue">Continue</string>
+    <string name="feedback_screen_btn_send">Send</string>
+    <string name="feedback_screen_message_has_been_sent">Your message has been sent</string>
+    <string name="feedback_screen_problem_placeholder">Please write more details about the problem…</string>
+    <string name="feedback_screen_idea_placeholder">Write more about your idea…</string>
+    <string name="feedback_screen_other_placeholder">Tell us more details…</string>
+    <string name="feedback_screen_rating_dialog_title">Thank You!</string>
+    <string name="feedback_screen_first_line_dialog_text">We love you too and thank you for your rating</string>
+    <string name="feedback_screen_second_line_dialog_text">The best reward for us:</string>
+    <string name="feedback_screen_confirm_btn_text">Rating in Google Play</string>
+    <string name="feedback_screen_title_help">How can we help you?</string>
+    <string name="feedback_screen_btn_caption_continue">Continue</string>
+    <string name="feedback_screen_title_problem">What is the problem?</string>
+    <string name="feedback_screen_title_idea">Tell us your idea:</string>
+    <string name="feedback_screen_btn_text_send">Send</string>
+
+
+    <string name="dismiss_screen_reason_one_title">No ads</string>
+    <string name="dismiss_screen_reason_one_subtitle">Focus on the main thing</string>
+    <string name="dismiss_screen_reason_two_title">Support us</string>
+    <string name="dismiss_screen_reason_two_subtitle">Help us improve our app</string>
+    <string name="dismiss_screen_button_caption">Disable Ads</string>
+    <string name="dismiss_screen_main_title">Pay once - use forever</string>
+
 
 </resources>

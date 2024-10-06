@@ -13,6 +13,9 @@ class Interactor @Inject constructor(
     private val repository: MainRepository
 ) {
 
+
+    fun getCurrentVersion(): StateFlow<String> = repository.currentVersionApp
+
     suspend fun updateActiveCurrencyList(newCurrenciesList: List<String>, screen: String) =
         repository.updateActiveCurrencyList(newCurrenciesList, screen)
 

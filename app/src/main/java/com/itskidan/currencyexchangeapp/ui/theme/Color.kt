@@ -31,7 +31,6 @@ val inverseOnSurfaceLight = Color(0xFFF0F0F7)
 val inversePrimaryLight = Color(0xFFAAC7FF)
 val surfaceTintLight = Color(0xFFD9D9E0)
 
-
 val primaryLightMediumContrast = Color(0xFF234373)
 val onPrimaryLightMediumContrast = Color(0xFFFFFFFF)
 val primaryContainerLightMediumContrast = Color(0xFF5875A8)
@@ -123,7 +122,6 @@ val inverseSurfaceDark = Color(0xFFE2E2E9)
 val inverseOnSurfaceDark = Color(0xFF2E3036)
 val inversePrimaryDark = Color(0xFF415F91)
 val surfaceTintDark = Color(0xFF111318)
-
 
 val primaryDarkMediumContrast = Color(0xFFB1CBFF)
 val onPrimaryDarkMediumContrast = Color(0xFF001634)
