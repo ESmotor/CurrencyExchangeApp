@@ -19,6 +19,8 @@ interface CurrencyDao {
     @Query("SELECT * FROM cached_currency_rates")
     fun getCachedCurrencyRatesFromDB(): Flow<List<Currency>>
 
+    @Query("SELECT currencyRate FROM cached_currency_rates WHERE currencyCode = :currencyCode LIMIT 1")
+    suspend fun getCurrencyRateByCode(currencyCode: String): Double?
 
     // methods for table cached_total_balance_currencies
     // Adding methods

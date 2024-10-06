@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +22,6 @@ import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -56,11 +56,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.R
-import com.itskidan.currencyexchangeapp.ui.components.AdvertisingSpace
+import com.itskidan.currencyexchangeapp.ui.components.AdBannerView
 import com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates.ActualExchangeRatesScreen
 import com.itskidan.currencyexchangeapp.ui.screens.totalbalance.TotalBalanceScreen
 import com.itskidan.currencyexchangeapp.ui.screens.worldtime.WorldTime
+import com.itskidan.currencyexchangeapp.utils.NavigationConstants
 import kotlinx.coroutines.launch
 
 
@@ -108,18 +110,62 @@ fun HomeScreen(
                     Spacer(Modifier.height(12.dp))
 
                     items.forEach { item ->
+                        val itemName = item.name.substringAfterLast(".")
+                        val label = viewModel.getLabelNameForDrawerMenu(item, context)
                         NavigationDrawerItem(
                             icon = { Icon(item, contentDescription = null) },
-                            label = {
-                                Text(viewModel.getLabelNameForDrawerMenu(item, context))
-                            },
+                            label = { Text(label) },
                             selected = item == items[selectedItemDrawerMenu.intValue],
                             onClick = {
-                                scope.launch {
-                                    drawerState.close()
+                                when (itemName) {
+                                    "CurrencyExchange", "MonetizationOn" -> {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                        selectedItemDrawerMenu.intValue = items.indexOf(item)
+                                        selectedItemDropdownMenu =
+                                            selectedItemDrawerMenu.intValue - 1
+                                    }
+
+                                    "Info" -> {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                        navController.navigate(
+                                            "${NavigationConstants.ABOUT_APP}/" +
+                                                    Constants.DRAWER_MENU_TO_ABOUT_APP
+                                        )
+                                    }
+
+                                    "Settings" -> {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                        navController.navigate(
+                                            "${NavigationConstants.SETTINGS}/" +
+                                                    Constants.DRAWER_MENU_TO_SETTINGS
+                                        )
+                                    }
+
+                                    "Message" -> {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                        navController.navigate(
+                                            "${NavigationConstants.SEND_FEEDBACK}/" +
+                                                    Constants.DRAWER_MENU_TO_SEND_FEEDBACK
+                                        )
+                                    }
+                                    "Star" -> {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                        navController.navigate(
+                                            "${NavigationConstants.DISABLE_AD}/" +
+                                                    Constants.DRAWER_MENU_TO_DISABLE_AD
+                                        )
+                                    }
                                 }
-                                selectedItemDrawerMenu.intValue = items.indexOf(item)
-                                selectedItemDropdownMenu = selectedItemDrawerMenu.intValue - 1
                             },
                             modifier = Modifier
                                 .padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -188,35 +234,49 @@ fun HomeScreen(
                     }
                 )
             },
-
-            bottomBar = {
-                BottomAppBar {
-                    AdvertisingSpace()
-                }
-
-            }
         ) { innerPadding ->
-            when (items[selectedItemDrawerMenu.intValue]) {
-                Icons.Default.CurrencyExchange -> {
-                    selectedItemDropdownMenu = 0
-                    ActualExchangeRatesScreen(
-                        innerPadding = innerPadding,
-                        navController = navController,
-                        scope = scope,
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    when (items[selectedItemDrawerMenu.intValue]) {
+                        Icons.Default.CurrencyExchange -> {
+                            if (selectedItemDropdownMenu != 0) {
+                                selectedItemDropdownMenu = 0
+                            }
+                            ActualExchangeRatesScreen(
+                                navController = navController,
+                                scope = scope,
+                            )
+                        }
 
-                Icons.Default.MonetizationOn -> {
-                    selectedItemDropdownMenu = 1
-                    TotalBalanceScreen(
-                        innerPadding = innerPadding,
-                        navController = navController,
-                        scope = scope
-                    )
-                }
+                        Icons.Default.MonetizationOn -> {
+                            if (selectedItemDropdownMenu != 1) {
+                                selectedItemDropdownMenu = 1
+                            }
+                            TotalBalanceScreen(
+                                navController = navController,
+                                scope = scope
+                            )
+                        }
 
-                Icons.Default.AccessTime -> {
-                    WorldTime(innerPadding = innerPadding)
+                        Icons.Default.AccessTime -> {
+                            WorldTime()
+                        }
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    AdBannerView(modifier = Modifier.height(50.dp))
                 }
             }
         }

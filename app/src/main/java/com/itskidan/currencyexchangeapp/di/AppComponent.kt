@@ -11,6 +11,10 @@ import com.itskidan.currencyexchangeapp.ui.screens.addcurrency.AddCurrencyViewMo
 import com.itskidan.currencyexchangeapp.ui.screens.calculator.CalculatorViewModel
 import com.itskidan.currencyexchangeapp.ui.screens.changecurreny.ChangeCurrencyViewModel
 import com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates.ActualExchangeRatesViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.adoutapp.AboutAppViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.dismissad.DismissAdViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.sendfeedback.SendFeedbackViewModel
+import com.itskidan.currencyexchangeapp.ui.screens.settings.SettingsViewModel
 import com.itskidan.currencyexchangeapp.ui.screens.totalbalance.TotalBalanceViewModel
 import com.itskidan.remote_module.providers.RemoteProvider
 import dagger.Component
@@ -30,5 +34,9 @@ interface AppComponent {
     fun inject(calculatorViewModel: CalculatorViewModel)
     fun inject(actualExchangeRatesViewModel: ActualExchangeRatesViewModel)
     fun inject(totalBalanceViewModel: TotalBalanceViewModel)
+    fun inject(aboutAppViewModel:AboutAppViewModel)
+    fun inject(settingsViewModel: SettingsViewModel)
+    fun inject(sendFeedbackViewModel: SendFeedbackViewModel)
+    fun inject(dismissAdViewModel: DismissAdViewModel)
 
 }

@@ -26,8 +26,8 @@ class ActualExchangeRatesViewModel : ViewModel() {
     val ratesFromDatabase: Flow<Map<String, Double>>
         get() = interactor.getRatesFromDatabase()
 
-     val lastUpdateTimeRates : StateFlow<Long>
-     get() = interactor.getLastUpdateCurrencyRates()
+    val lastUpdateTimeRates: StateFlow<Long>
+        get() = interactor.getLastUpdateCurrencyRates()
 
 
     private var currentInput = Pair("", "")
@@ -44,7 +44,7 @@ class ActualExchangeRatesViewModel : ViewModel() {
     }
 
     fun updateCurrentInput(code: String, value: String) {
-        Timber.tag("MyLog").d("updateCurrentInput: $code, value: $value)")
+        Timber.tag("MyLog").d("updateCurrentInput($code = $value)")
         currentInput = Pair(code, value.ifEmpty { "0" })
     }
 
@@ -101,6 +101,7 @@ class ActualExchangeRatesViewModel : ViewModel() {
 
     // Work with sharedPreferences
     fun saveSelectedLastState(code: String, value: String) {
+        Timber.tag("MyLog").d("saveSelectedLastState($code = $value)")
         viewModelScope.launch(Dispatchers.IO) {
             interactor.saveSelectedLastState(code, value)
         }
@@ -117,7 +118,7 @@ class ActualExchangeRatesViewModel : ViewModel() {
         }
     }
 
-        suspend fun updateDatabaseRates() {
-            interactor.updateDatabase()
+    suspend fun updateDatabaseRates() {
+        interactor.updateDatabase()
     }
 }

@@ -20,7 +20,6 @@ class HomeViewModel : ViewModel() {
             Icons.Default.Star,
             Icons.Default.CurrencyExchange,
             Icons.Default.MonetizationOn,
-            Icons.Default.AccessTime,
             Icons.Default.Settings,
             Icons.AutoMirrored.Filled.Message,
             Icons.Default.Info,

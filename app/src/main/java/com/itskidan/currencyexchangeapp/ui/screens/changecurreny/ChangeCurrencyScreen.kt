@@ -4,11 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,13 +43,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.itskidan.currencyexchangeapp.ui.components.AdBannerView
 import com.itskidan.currencyexchangeapp.ui.components.CurrencyCodeAndName
 import com.itskidan.currencyexchangeapp.ui.components.CurrencyFlag
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -61,6 +68,12 @@ fun ChangeCurrencyScreen(
 ) {
     Timber.tag("MyLog").d("fromScreen:$locationOfRequest")
     val scope = rememberCoroutineScope()
+
+    val context = LocalContext.current
+
+    var isEnableBackBtn by remember { mutableStateOf(true) }
+
+    viewModel.loadInterstitialAd(context)
 
     var currenciesList by remember { mutableStateOf(listOf<String>()) }
 
@@ -84,7 +97,19 @@ fun ChangeCurrencyScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
+                        scope.launch {
+                            viewModel.showInterstitialAd(context) {}
+                        }
+
+                        if (isEnableBackBtn) {
+                            isEnableBackBtn = false
+                            navController.popBackStack()
+
+                            scope.launch {
+                                delay(1000)
+                                isEnableBackBtn = true
+                            }
+                        }
                     }) {
                         Icon(Icons.Default.ArrowBackIosNew, "Back")
                     }
@@ -116,36 +141,60 @@ fun ChangeCurrencyScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            state = lazyListState,
+                .padding(top = innerPadding.calculateTopPadding())
+                .navigationBarsPadding()
+                .imePadding()
+                .consumeWindowInsets(innerPadding)
         ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    state = lazyListState,
+                ) {
 
-            // Passive currency
-            items(searchingCurrenciesList) { newCurrencyCode ->
-                ChangeCurrencyCard(
-                    currencyCode = newCurrencyCode,
-                    currencyFlag = viewModel.getCurrencyFlag(newCurrencyCode),
-                    currencyName = viewModel.getCurrencyName(newCurrencyCode),
-                    onCardClick = {
-                        scope.launch {
-                            viewModel.onCurrencyClick(
-                                isFocused = isFocused,
-                                oldCurrencyCode = oldCurrencyCode,
-                                newCurrencyCode = newCurrencyCode,
-                                oldCurrencyValue = oldCurrencyValue,
-                                locationOfRequest = locationOfRequest
-                            )
-                            navController.popBackStack()
-                        }
+                    // Passive currency
+                    items(searchingCurrenciesList) { newCurrencyCode ->
+                        ChangeCurrencyCard(
+                            currencyCode = newCurrencyCode,
+                            currencyFlag = viewModel.getCurrencyFlag(newCurrencyCode),
+                            currencyName = viewModel.getCurrencyName(newCurrencyCode),
+                            onCardClick = {
+                                scope.launch {
+                                    viewModel.onCurrencyClick(
+                                        isFocused = isFocused,
+                                        oldCurrencyCode = oldCurrencyCode,
+                                        newCurrencyCode = newCurrencyCode,
+                                        oldCurrencyValue = oldCurrencyValue,
+                                        locationOfRequest = locationOfRequest
+                                    )
+                                    viewModel.showInterstitialAd(context) {}
+                                    navController.popBackStack()
+                                }
+                            }
+                        )
                     }
-                )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                AdBannerView(modifier = Modifier.height(50.dp))
             }
         }
     }
 }
+
 @Composable
 fun ChangeCurrencyCard(
     currencyCode: String,

@@ -3,8 +3,6 @@ package com.itskidan.currencyexchangeapp.ui.screens.calculator
 import androidx.lifecycle.ViewModel
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.math.BigDecimal
 import javax.inject.Inject
@@ -88,7 +86,6 @@ class CalculatorViewModel : ViewModel() {
         var existOperators = operators
         val prioritizedOperators = listOf("×", "÷")
         val secondaryOperators = listOf("—", "+")
-        Timber.tag("MyLog").d("operands:$operands, existOperators:$existOperators")
         prioritizedOperators.forEach { op ->
             while (existOperators.contains(op)) {
                 val index = existOperators.indexOf(op)
@@ -100,8 +97,6 @@ class CalculatorViewModel : ViewModel() {
                 operands[index] = result
                 operands.removeAt(index + 1)
                 existOperators = existOperators.removeRange(index..index)
-                Timber.tag("MyLog")
-                    .d("operands:$operands, existOperators:$existOperators, result: $result")
             }
         }
 
@@ -112,8 +107,6 @@ class CalculatorViewModel : ViewModel() {
                 operands[index] = result
                 operands.removeAt(index + 1)
                 existOperators = existOperators.removeRange(index..index)
-                Timber.tag("MyLog")
-                    .d("operands:$operands, existOperators:$existOperators, result: $result")
             }
         }
         return operands.firstOrNull() ?: "Error"
@@ -135,9 +128,7 @@ class CalculatorViewModel : ViewModel() {
     }
 
     suspend fun updateTotalBalanceCurrencyByCode(code: String, value: String) {
-        Timber.tag("MyLog").d("updateTotalBalanceCurrencyByCode(code:$code, value:$value)")
         interactor.updateTotalBalanceCurrencyByCode(code, value.toDoubleOrNull() ?: 0.0)
     }
-
 
 }

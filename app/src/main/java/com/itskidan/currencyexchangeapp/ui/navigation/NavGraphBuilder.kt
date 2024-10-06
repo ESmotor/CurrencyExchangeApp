@@ -5,12 +5,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.itskidan.currencyexchangeapp.ui.screens.addcurrency.AddCurrencyScreen
+import com.itskidan.currencyexchangeapp.ui.screens.adoutapp.AboutAppScreen
 import com.itskidan.currencyexchangeapp.ui.screens.calculator.CalculatorScreen
 import com.itskidan.currencyexchangeapp.ui.screens.changecurreny.ChangeCurrencyScreen
+import com.itskidan.currencyexchangeapp.ui.screens.dismissad.DismissAdScreen
 import com.itskidan.currencyexchangeapp.utils.NavigationConstants
 import com.itskidan.currencyexchangeapp.ui.screens.home.HomeScreen
+import com.itskidan.currencyexchangeapp.ui.screens.sendfeedback.SendFeedBackScreen
+import com.itskidan.currencyexchangeapp.ui.screens.settings.SettingsScreen
+
+
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -69,6 +76,56 @@ fun NavGraph(navController: NavHostController) {
                 navController = navController,
                 currencyCode = currencyCode,
                 currencyValue = currencyValue,
+                locationOfRequest = locationOfRequest
+            )
+        }
+        composable(
+            route="${NavigationConstants.ABOUT_APP}/{locationOfRequest}",
+            arguments = listOf(
+                navArgument("locationOfRequest") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val locationOfRequest = backStackEntry.arguments?.getString("locationOfRequest") ?: "unknown_location"
+            AboutAppScreen(
+                navController = navController,
+                locationOfRequest = locationOfRequest
+            )
+        }
+        composable(
+            route="${NavigationConstants.SETTINGS}/{locationOfRequest}",
+            arguments = listOf(
+                navArgument("locationOfRequest") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val locationOfRequest = backStackEntry.arguments?.getString("locationOfRequest") ?: "unknown_location"
+            SettingsScreen(
+                navController = navController,
+                locationOfRequest = locationOfRequest
+            )
+        }
+
+        composable(
+            route="${NavigationConstants.SEND_FEEDBACK}/{locationOfRequest}",
+            arguments = listOf(
+                navArgument("locationOfRequest") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val locationOfRequest = backStackEntry.arguments?.getString("locationOfRequest") ?: "unknown_location"
+            SendFeedBackScreen(
+                navController = navController,
+                locationOfRequest = locationOfRequest
+            )
+        }
+
+        composable(
+            route="${NavigationConstants.DISABLE_AD}/{locationOfRequest}",
+            arguments = listOf(
+                navArgument("locationOfRequest") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val locationOfRequest = backStackEntry.arguments?.getString("locationOfRequest") ?: "unknown_location"
+            DismissAdScreen(
+                navController = navController,
                 locationOfRequest = locationOfRequest
             )
         }

@@ -195,7 +195,7 @@ fun KeyButton(
                             .fillMaxSize(),
                         imageVector = Icons.Default.Sync,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        contentDescription = "Add Currency icon",
+                        contentDescription = "Update rates",
                     )
                 }
 

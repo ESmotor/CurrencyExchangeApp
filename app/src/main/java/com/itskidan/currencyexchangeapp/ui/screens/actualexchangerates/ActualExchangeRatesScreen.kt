@@ -1,17 +1,25 @@
 package com.itskidan.currencyexchangeapp.ui.screens.actualexchangerates
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -25,13 +33,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.core.Utils.TimeUtils
 import com.itskidan.core_impl.utils.Constants
+import com.itskidan.currencyexchangeapp.R
 import com.itskidan.currencyexchangeapp.ui.components.CurrencyCard
 import com.itskidan.currencyexchangeapp.ui.components.KeyboardForTyping
 import com.itskidan.currencyexchangeapp.ui.components.UpdateBox
@@ -40,11 +53,11 @@ import com.itskidan.currencyexchangeapp.utils.NavigationConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @Composable
 fun ActualExchangeRatesScreen(
     viewModel: ActualExchangeRatesViewModel = viewModel(),
-    innerPadding: PaddingValues,
     navController: NavHostController,
     scope: CoroutineScope,
 ) {
@@ -80,8 +93,8 @@ fun ActualExchangeRatesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding)
     ) {
+        // Update time area
         Box(
             modifier = Modifier
                 .weight(3f)
@@ -95,6 +108,8 @@ fun ActualExchangeRatesScreen(
                 updateTime = updateTime
             )
         }
+
+        // Currency list area
         Box(
             modifier = Modifier
                 .weight(58f)
@@ -144,10 +159,20 @@ fun ActualExchangeRatesScreen(
                                 "$isFocused/" +
                                 Constants.ACTUAL_RATES_LIST_TO_CHANGE_CURRENCY
                     )
+                },
+                onUpdateRates = {
+                    scope.launch {
+                        isUpdating = true
+                        viewModel.updateDatabaseRates()
+                        delay(1000)
+                        isUpdating = false
+                    }
                 }
             )
 
         }
+
+        // Keyboard area
         Box(
             modifier = Modifier
                 .weight(32f)
@@ -158,7 +183,14 @@ fun ActualExchangeRatesScreen(
                 textState = textStateFromKeyboard.value,
                 isChangeFocus = isChangeFocus.value,
                 onTextChange = { newTextState ->
+                    Timber.tag("MyLog").d("KeyboardForTyping:onTextChange($newTextState)")
                     isChangeFocus.value = false
+                    val currencyCode = viewModel.getCurrentInput().first
+                    viewModel.updateCurrentInput(currencyCode, newTextState.text)
+                    viewModel.saveSelectedLastState(currencyCode, newTextState.text)
+                    scope.launch {
+                        viewModel.updateActiveCurrencyRates()
+                    }
                     textStateFromKeyboard.value = newTextState
                 },
                 onFocusChange = { value ->
@@ -207,7 +239,8 @@ fun PullToRefreshLazyColumn(
     onRefresh: () -> Unit,
     onFocusChange: (Int, String, String) -> Unit,
     onTextChange: (TextFieldValue) -> Unit,
-    onChangeCurrency: (String, String, Boolean) -> Unit
+    onChangeCurrency: (String, String, Boolean) -> Unit,
+    onUpdateRates:()->Unit
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val calculatedRates by viewModel.activeCurrencyRates.collectAsState(emptyMap())
@@ -231,44 +264,68 @@ fun PullToRefreshLazyColumn(
             contentPadding = PaddingValues(LocalPaddingValues.current.small),
 
             ) {
-            itemsIndexed(activeCurrencyList) { index, currencyCode ->
-                // Check if this item was the last selected one
-                val isInitiallyFocused = index == lastSelectedIndex
-                val rate = calculatedRates[currencyCode] ?: "0"
-                val textFieldValue = when {
-                    isInitiallyFocused && isChangeFocus -> {
-                        TextFieldValue(
-                            text = textStateFromKeyboard.text,
-                            selection = TextRange(0, textStateFromKeyboard.text.length)
+            if (ratesFromDatabase["USD"] == null || ratesFromDatabase["USD"] == 0.0) {
+                Timber.tag("MyLog").d("ratesFromDatabase:$ratesFromDatabase")
+                item {
+                    Column(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surface)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(R.string.actual_currency_exchange_rate_screen_database_is_empty),
+                            modifier = Modifier
+                                .fillMaxWidth(0.85f)
+                                .padding(vertical = LocalPaddingValues.current.medium),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge
                         )
+                        Icon(
+                            modifier = Modifier
+                                .size(50.dp, 50.dp)
+                                .clickable(onClick = {
+                                    onUpdateRates()
+                                }),
+                            imageVector = Icons.Default.Sync,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            contentDescription = "Update rates",
+
+                            )
                     }
-
-                    isInitiallyFocused -> textStateFromKeyboard
-                    else -> TextFieldValue(rate)
                 }
-
-                LaunchedEffect(textStateFromKeyboard) {
-                    if (isInitiallyFocused) {
-                        val value = textStateFromKeyboard.text
-                        viewModel.updateCurrentInput(currencyCode, value)
-                        viewModel.saveSelectedLastState(currencyCode, value)
-                        if (!isChangeFocus) {
-                            viewModel.updateActiveCurrencyRates()
+            } else {
+                Timber.tag("MyLog").d("ratesFromDatabase:$ratesFromDatabase")
+                itemsIndexed(activeCurrencyList) { index, currencyCode ->
+                    // Check if this item was the last selected one
+                    val isInitiallyFocused = index == lastSelectedIndex
+                    val rate = calculatedRates[currencyCode] ?: "0"
+                    val textFieldValue = when {
+                        isInitiallyFocused && isChangeFocus -> {
+                            TextFieldValue(
+                                text = textStateFromKeyboard.text,
+                                selection = TextRange(0, textStateFromKeyboard.text.length)
+                            )
                         }
-                    }
-                }
 
-                CurrencyCard(
-                    currencyCode = currencyCode,
-                    currencyFlag = viewModel.getCurrencyFlag(currencyCode),
-                    isFocused = isInitiallyFocused,
-                    textFieldValue = textFieldValue,
-                    onFocusChange = { onFocusChange(index, currencyCode, textFieldValue.text) },
-                    onTextChange = onTextChange,
-                    onChangeCurrency = { code,value,isFocused->
-                        onChangeCurrency(code, value, isFocused)
+                        isInitiallyFocused -> textStateFromKeyboard
+                        else -> TextFieldValue(rate)
                     }
-                )
+
+                    CurrencyCard(
+                        currencyCode = currencyCode,
+                        currencyFlag = viewModel.getCurrencyFlag(currencyCode),
+                        isFocused = isInitiallyFocused,
+                        textFieldValue = textFieldValue,
+                        onFocusChange = { onFocusChange(index, currencyCode, textFieldValue.text) },
+                        onTextChange = onTextChange,
+                        onChangeCurrency = { code, value, isFocused ->
+                            onChangeCurrency(code, value, isFocused)
+                        }
+                    )
+                }
             }
         }
 
@@ -291,5 +348,41 @@ fun PullToRefreshLazyColumn(
             modifier = Modifier
                 .align(Alignment.TopCenter),
         )
+    }
+}
+
+
+@Preview
+@Composable
+fun DatabaseNotReady(
+
+) {
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "The currency exchange rate database is empty. Please check your internet connection and update the currency database.",
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .padding(vertical = LocalPaddingValues.current.medium),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Icon(
+            modifier = Modifier
+                .size(50.dp, 50.dp)
+                .clickable(onClick = {
+
+                }),
+            imageVector = Icons.Default.Sync,
+            tint = MaterialTheme.colorScheme.onSurface,
+            contentDescription = "Update rates",
+
+            )
     }
 }

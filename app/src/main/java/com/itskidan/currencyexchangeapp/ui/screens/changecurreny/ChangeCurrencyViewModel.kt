@@ -1,14 +1,19 @@
 package com.itskidan.currencyexchangeapp.ui.screens.changecurreny
 
+import android.app.Activity
+import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.application.App
 import com.itskidan.currencyexchangeapp.domain.Interactor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -18,6 +23,7 @@ class ChangeCurrencyViewModel : ViewModel() {
 
     private val currencyNamesMap: Map<String, String>
         get() = interactor.getCurrencyNamesMap()
+
     private val currencyFlagsMap: Map<String, Int>
         get() = interactor.getCurrencyFlagsMap()
 
@@ -26,6 +32,8 @@ class ChangeCurrencyViewModel : ViewModel() {
 
     private val activeCurrencyList: StateFlow<List<String>>
         get() = interactor.getActiveCurrencyList()
+
+    private var interstitialAd: InterstitialAd? = null
 
     init {
         App.instance.dagger.inject(this)
@@ -115,4 +123,42 @@ class ChangeCurrencyViewModel : ViewModel() {
 
     }
 
+    fun loadInterstitialAd(context: Context) {
+        InterstitialAd.load(context,
+            Constants.INTERSTITIAL_AD_UNIT_ID,
+            AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(p0: LoadAdError) {
+                    super.onAdFailedToLoad(p0)
+                    interstitialAd = null
+                }
+
+                override fun onAdLoaded(p0: InterstitialAd) {
+                    super.onAdLoaded(p0)
+                    interstitialAd = p0
+                }
+            })
+    }
+
+    fun showInterstitialAd(context: Context, onAdDismissed: () -> Unit) {
+        if (interstitialAd != null) {
+            interstitialAd!!.fullScreenContentCallback =
+                object : FullScreenContentCallback() {
+                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+                        super.onAdFailedToShowFullScreenContent(p0)
+                        interstitialAd = null
+                    }
+
+                    override fun onAdDismissedFullScreenContent() {
+                        super.onAdDismissedFullScreenContent()
+                        interstitialAd = null
+
+                        loadInterstitialAd(context)
+                        onAdDismissed()
+
+                    }
+                }
+            interstitialAd!!.show(context as Activity)
+        }
+    }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,9 +35,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,10 +54,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.R
-import com.itskidan.currencyexchangeapp.ui.components.AdvertisingSpace
+import com.itskidan.currencyexchangeapp.ui.components.AdBannerView
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -71,6 +73,7 @@ fun CalculatorScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var isEnableBackBtn by remember { mutableStateOf(true) }
     val textStateFromKeyboard = remember { mutableStateOf(currencyValue) }
     val resultState = remember { mutableStateOf("") }
     val isDivideByZero = remember { mutableStateOf(false) }
@@ -86,119 +89,154 @@ fun CalculatorScreen(
                 modifier = Modifier.statusBarsPadding(),
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
+                        if (isEnableBackBtn) {
+                            isEnableBackBtn = false
+                            navController.popBackStack()
+
+                            scope.launch {
+                                delay(1000)
+                                isEnableBackBtn = true
+                            }
+                        }
                     }) {
                         Icon(Icons.Default.ArrowBackIosNew, "Back")
                     }
                 },
             )
         },
-        bottomBar = {
-            BottomAppBar {
-                AdvertisingSpace()
-            }
-
-        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .weight(30f)
-            )
-            {
-                InputAndCalculation(
-                    textStateFromKeyboard = textStateFromKeyboard.value,
-                    resultTextState = resultState.value
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(3f)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    thickness = 2.dp,
-                    modifier = Modifier.fillMaxWidth(0.9f),
-
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(30f)
                     )
+                    {
+                        InputAndCalculation(
+                            textStateFromKeyboard = textStateFromKeyboard.value,
+                            resultTextState = resultState.value
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(3f)
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            thickness = 2.dp,
+                            modifier = Modifier.fillMaxWidth(0.9f),
+
+                            )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(70f)
+                    )
+                    {
+                        CalculatorKeyboard(
+                            scope = scope,
+                            viewModel = viewModel,
+                            textState = textStateFromKeyboard.value,
+                            isAvailableToDone = isAvailableToDone.value,
+                            onInputTextChange = { newText ->
+                                textStateFromKeyboard.value = newText
+                            },
+                            onResultTextChange = { newResult ->
+                                resultState.value = newResult
+                            },
+                            onEqualOrDoneClick = {
+                                if (isAvailableToDone.value) {
+                                    when (locationOfRequest){
+                                        Constants.ACTUAL_RATES_KEYBOARD_TO_CALCULATOR->{
+                                            scope.launch {
+                                                viewModel.saveSelectedLastState(
+                                                    code = currencyCode,
+                                                    value = textStateFromKeyboard.value.replace(",", ".")
+                                                )
+                                                if (isEnableBackBtn) {
+                                                    isEnableBackBtn = false
+                                                    navController.popBackStack()
+
+                                                    scope.launch {
+                                                        delay(1000)
+                                                        isEnableBackBtn = true
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Constants.TOTAL_BALANCE_KEYBOARD_TO_CALCULATOR->{
+                                            scope.launch {
+                                                viewModel.updateTotalBalanceCurrencyByCode(
+                                                    code = currencyCode,
+                                                    value = textStateFromKeyboard.value.replace(",", ".")
+                                                )
+                                                if (isEnableBackBtn) {
+                                                    isEnableBackBtn = false
+                                                    navController.popBackStack()
+
+                                                    scope.launch {
+                                                        delay(1000)
+                                                        isEnableBackBtn = true
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+
+
+                                } else {
+                                    if (isDivideByZero.value) {
+                                        Toast.makeText(
+                                            context,
+                                            "You can't divide by zero",
+                                            Toast.LENGTH_SHORT
+                                        )
+                                            .show()
+                                    } else {
+                                        textStateFromKeyboard.value = resultState.value
+                                        resultState.value = ""
+                                    }
+                                }
+
+
+                            },
+                            onDivideByZero = { newState ->
+                                isDivideByZero.value = newState
+                            },
+                            onAvailableToDoneChange = { newState ->
+                                isAvailableToDone.value = newState
+                            }
+                        )
+                    }
+                }
             }
+
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .weight(70f)
-            )
-            {
-                CalculatorKeyboard(
-                    scope = scope,
-                    viewModel = viewModel,
-                    textState = textStateFromKeyboard.value,
-                    isAvailableToDone = isAvailableToDone.value,
-                    onInputTextChange = { newText ->
-                        textStateFromKeyboard.value = newText
-                    },
-                    onResultTextChange = { newResult ->
-                        resultState.value = newResult
-                    },
-                    onEqualOrDoneClick = {
-                        if (isAvailableToDone.value) {
-                            when (locationOfRequest){
-                                Constants.ACTUAL_RATES_KEYBOARD_TO_CALCULATOR->{
-                                    scope.launch {
-                                        viewModel.saveSelectedLastState(
-                                            code = currencyCode,
-                                            value = textStateFromKeyboard.value.replace(",", ".")
-                                        )
-                                        navController.popBackStack()
-                                    }
-                                }
-                                Constants.TOTAL_BALANCE_KEYBOARD_TO_CALCULATOR->{
-                                    scope.launch {
-                                        viewModel.updateTotalBalanceCurrencyByCode(
-                                            code = currencyCode,
-                                            value = textStateFromKeyboard.value.replace(",", ".")
-                                        )
-                                        navController.popBackStack()
-                                    }
-                                }
-                            }
-
-
-
-                        } else {
-                            if (isDivideByZero.value) {
-                                Toast.makeText(
-                                    context,
-                                    "You can't divide by zero",
-                                    Toast.LENGTH_SHORT
-                                )
-                                    .show()
-                            } else {
-                                textStateFromKeyboard.value = resultState.value
-                                resultState.value = ""
-                            }
-                        }
-
-
-                    },
-                    onDivideByZero = { newState ->
-                        isDivideByZero.value = newState
-                    },
-                    onAvailableToDoneChange = { newState ->
-                        isAvailableToDone.value = newState
-                    }
-                )
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                AdBannerView(modifier = Modifier.height(50.dp))
             }
         }
     }
-
-
 }
 
 @Composable

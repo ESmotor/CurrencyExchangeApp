@@ -1,5 +1,6 @@
 package com.itskidan.currencyexchangeapp.ui.screens.addcurrency
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -8,9 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -44,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -55,9 +60,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.itskidan.core_impl.utils.Constants
 import com.itskidan.currencyexchangeapp.R
+import com.itskidan.currencyexchangeapp.ui.components.AdBannerView
 import com.itskidan.currencyexchangeapp.ui.components.CurrencyCodeAndName
 import com.itskidan.currencyexchangeapp.ui.components.CurrencyFlag
 import com.itskidan.currencyexchangeapp.ui.theme.LocalPaddingValues
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -72,6 +79,10 @@ fun AddCurrencyScreen(
 ) {
     Timber.tag("MyLog").d("locationOfRequest:$locationOfRequest")
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var isEnableBackBtn by remember { mutableStateOf(true) }
+
+    viewModel.loadInterstitialAd(context)
 
     // create Data
     var selectedList by remember { mutableStateOf(listOf<String>()) }
@@ -108,7 +119,18 @@ fun AddCurrencyScreen(
                     IconButton(onClick = {
                         scope.launch {
                             viewModel.updateActiveCurrencyList(selectedList, locationOfRequest)
-                            navController.popBackStack()
+
+                            viewModel.showInterstitialAd(context) {}
+
+                            if (isEnableBackBtn) {
+                                isEnableBackBtn = false
+                                navController.popBackStack()
+
+                                scope.launch {
+                                    delay(700)
+                                    isEnableBackBtn = true
+                                }
+                            }
                         }
                     }) {
                         Icon(
@@ -148,83 +170,116 @@ fun AddCurrencyScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding())
+                .navigationBarsPadding()
+                .imePadding()
+                .consumeWindowInsets(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                state = lazyListState,
-                contentPadding = PaddingValues(LocalPaddingValues.current.small),
-            ) {
-                // Active currency
 
-                itemsIndexed(
-                    searchingSelectedList,
-                    key = { _, currencyCode -> currencyCode }) { index, currencyCode ->
-                    ReorderableItem(reorderableLazyColumnState, currencyCode) {
-                        val interactionSource = remember { MutableInteractionSource() }
-                        AddCurrencyCard(
-                            modifier = Modifier.draggableHandle(
-                                onDragStarted = {},
-                                onDragStopped = {},
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    state = lazyListState,
+                    contentPadding = PaddingValues(LocalPaddingValues.current.small),
+                ) {
+                    // Active currency
+
+                    itemsIndexed(searchingSelectedList, key = { _, currencyCode -> currencyCode })
+                    { index, currencyCode ->
+                        ReorderableItem(reorderableLazyColumnState, currencyCode) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            AddCurrencyCard(
+                                modifier = Modifier.draggableHandle(
+                                    onDragStarted = {},
+                                    onDragStopped = {},
+                                    interactionSource = interactionSource,
+                                    enabled = searchText.isEmpty()
+                                ),
+                                isDraggable = searchText.isEmpty(),
+                                isSelected = true,
+                                currencyCode = currencyCode,
+                                currencyName = viewModel.getCurrencyName(currencyCode),
+                                currencyFlag = viewModel.getCurrencyFlag(currencyCode),
                                 interactionSource = interactionSource,
-                                enabled = searchText.isEmpty()
-                            ),
-                            isDraggable = searchText.isEmpty(),
-                            isSelected = true,
+                                onClick = {
+                                    when (locationOfRequest) {
+                                        Constants.ACTUAL_RATES_KEYBOARD_TO_ADD_CURRENCY -> {
+                                            if (selectedList.size > 2) {
+                                                selectedList = selectedList.filterNot { it == currencyCode }
+                                                otherList = otherList.toMutableList()
+                                                    .apply { add(currencyCode) }
+                                                    .sorted()
+                                            } else {
+                                                val toastText =
+                                                    context.getString(R.string.add_currency_screen_minimum_number_of_currencies)
+                                                Toast.makeText(context, toastText, Toast.LENGTH_SHORT)
+                                                    .show()
+                                            }
+                                        }
+                                        Constants.TOTAL_BALANCE_KEYBOARD_TO_ADD_CURRENCY -> {
+
+                                        }
+                                    }
+
+                                },
+                                actionMoveUp = {
+                                    if (index > 0) {
+                                        selectedList = selectedList.toMutableList()
+                                            .apply { add(index - 1, removeAt(index)) }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                actionMoveDown = {
+                                    if (index < selectedList.size - 1) {
+                                        selectedList = selectedList.toMutableList()
+                                            .apply { add(index + 1, removeAt(index)) }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    //Divider between two lists
+                    item {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outline,
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp)
+                        )
+                    }
+
+                    //Passive currency
+                    items(searchingOtherList) { currencyCode ->
+                        AddCurrencyCard(
+                            isSelected = false,
                             currencyCode = currencyCode,
                             currencyName = viewModel.getCurrencyName(currencyCode),
                             currencyFlag = viewModel.getCurrencyFlag(currencyCode),
-                            interactionSource = interactionSource,
                             onClick = {
-                                selectedList = selectedList.filterNot { it == currencyCode }
-                                otherList = otherList.toMutableList()
-                                    .apply { add(currencyCode) }
-                                    .sorted()
+                                selectedList =
+                                    selectedList.toMutableList().apply { add(currencyCode) }
+                                otherList = otherList.filterNot { it == currencyCode }.sorted()
                             },
-                            actionMoveUp = {
-                                if (index > 0) {
-                                    selectedList = selectedList.toMutableList()
-                                        .apply { add(index - 1, removeAt(index)) }
-                                    true
-                                } else {
-                                    false
-                                }
-                            },
-                            actionMoveDown = {
-                                if (index < selectedList.size - 1) {
-                                    selectedList = selectedList.toMutableList()
-                                        .apply { add(index + 1, removeAt(index)) }
-                                    true
-                                } else {
-                                    false
-                                }
-                            }
                         )
                     }
                 }
+            }
 
-                //Divider between two lists
-                item {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outline,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp)
-                    )
-                }
-
-                //Passive currency
-                items(searchingOtherList) { currencyCode ->
-                    AddCurrencyCard(
-                        isSelected = false,
-                        currencyCode = currencyCode,
-                        currencyName = viewModel.getCurrencyName(currencyCode),
-                        currencyFlag = viewModel.getCurrencyFlag(currencyCode),
-                        onClick = {
-                            selectedList = selectedList.toMutableList().apply { add(currencyCode) }
-                            otherList = otherList.filterNot { it == currencyCode }.sorted()
-                        },
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                AdBannerView(modifier = Modifier.height(50.dp))
             }
         }
     }
